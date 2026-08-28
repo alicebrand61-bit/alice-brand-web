@@ -1,0 +1,294 @@
+import os
+import json
+import uuid
+from typing import List, Optional
+from pathlib import Path
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, status
+from app.models import ProductCreate, ProductUpdate, ProductOut, OrderOut, OrderStatusUpdate
+from app.database import query_db, execute_db
+from app.auth import get_current_admin
+from app.routers.product_routes import format_product_row
+
+router = APIRouter(prefix="/api/admin", tags=["Panel de Administración"])
+
+UPLOAD_DIR = Path(__file__).resolve().parent.parent / "uploads"
+UPLOAD_DIR.mkdir(exist_ok=True)
+
+@router.get("/stats")
+def get_admin_stats(admin: dict = Depends(get_current_admin)):
+    # 1. Total revenue
+    rev_row = query_db("SELECT SUM(total_cop) as total FROM orders WHERE payment_status = 'completed'", one=True)
+    total_revenue = rev_row["total"] if rev_row and rev_row["total"] else 0.0
+
+    # 2. Total orders count
+    orders_count_row = query_db("SELECT COUNT(*) as count FROM orders", one=True)
+    total_orders = orders_count_row["count"] if orders_count_row else 0
+
+    # 3. Orders by status
+    status_counts = query_db("SELECT order_status, COUNT(*) as count FROM orders GROUP BY order_status")
+    status_dict = {row["order_status"]: row["count"] for row in status_counts}
+
+    # 4. Products count & low stock
+    prod_count_row = query_db("SELECT COUNT(*) as count FROM products", one=True)
+    total_products = prod_count_row["count"] if prod_count_row else 0
+    
+    low_stock = query_db("SELECT id, name, stock, price_cop FROM products WHERE stock <= 5 ORDER BY stock ASC")
+
+    # 5. Total customers
+    cust_count_row = query_db("SELECT COUNT(*) as count FROM users WHERE role = 'customer'", one=True)
+    total_customers = cust_count_row["count"] if cust_count_row else 0
+
+    # 6. Recent orders
+    recent_orders = query_db("SELECT * FROM orders ORDER BY id DESC LIMIT 5")
+
+    return {
+        "total_revenue_cop": total_revenue,
+        "total_orders": total_orders,
+        "orders_by_status": status_dict,
+        "total_products": total_products,
+        "total_customers": total_customers,
+        "low_stock_products": low_stock,
+        "recent_orders": recent_orders
+    }
+
+@router.get("/orders", response_model=List[OrderOut])
+def get_admin_orders(
+    status: Optional[str] = None,
+    search: Optional[str] = None,
+    admin: dict = Depends(get_current_admin)
+):
+    sql = "SELECT * FROM orders WHERE 1=1"
+    params = []
+
+    if status:
+        sql += " AND order_status = ?"
+        params.append(status)
+
+    if search:
+        s = f"%{search.strip().lower()}%"
+        sql += " AND (LOWER(order_number) LIKE ? OR LOWER(customer_name) LIKE ? OR LOWER(customer_email) LIKE ? OR LOWER(customer_phone) LIKE ?)"
+        params.extend([s, s, s, s])
+
+    sql += " ORDER BY id DESC"
+    orders = query_db(sql, params)
+    
+    result = []
+    for o in orders:
+        items = query_db("SELECT * FROM order_items WHERE order_id = ?", (o["id"],))
+        o_dict = dict(o)
+        o_dict["items"] = items or []
+        result.append(o_dict)
+    return result
+
+@router.put("/orders/{order_id}/status")
+def update_order_status(
+    order_id: int,
+    status_in: OrderStatusUpdate,
+    admin: dict = Depends(get_current_admin)
+):
+    order = query_db("SELECT * FROM orders WHERE id = ?", (order_id,), one=True)
+    if not order:
+        raise HTTPException(status_code=404, detail="Orden no encontrada.")
+
+    sql = "UPDATE orders SET order_status = ?"
+    params = [status_in.order_status]
+
+    if status_in.payment_status:
+        sql += ", payment_status = ?"
+        params.append(status_in.payment_status)
+
+    sql += " WHERE id = ?"
+    params.append(order_id)
+
+    execute_db(sql, params)
+    return {"success": True, "message": f"Orden {order['order_number']} actualizada a estado: {status_in.order_status}"}
+
+@router.post("/products", response_model=ProductOut)
+def create_product(product_in: ProductCreate, admin: dict = Depends(get_current_admin)):
+    # Generate unique slug if not provided
+    base_slug = product_in.name.lower().replace(" ", "-").replace("ñ", "n").replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u")
+    clean_slug = "".join(c for c in base_slug if c.isalnum() or c == "-")
+    slug = clean_slug
+    
+    # Check slug collision
+    existing = query_db("SELECT id FROM products WHERE slug = ?", (slug,), one=True)
+    if existing:
+        slug = f"{clean_slug}-{uuid.uuid4().hex[:4]}"
+
+    colors_data = [c.model_dump() for c in product_in.colors]
+
+    product_id = execute_db(
+        """
+        INSERT INTO products (
+            name, slug, description, price_cop, category_id, sizes,
+            colors, images, stock, featured, is_new
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            product_in.name,
+            slug,
+            product_in.description,
+            product_in.price_cop,
+            product_in.category_id,
+            json.dumps(product_in.sizes),
+            json.dumps(colors_data),
+            json.dumps(product_in.images),
+            product_in.stock,
+            1 if product_in.featured else 0,
+            1 if product_in.is_new else 0
+        )
+    )
+
+    row = query_db(
+        """
+        SELECT p.*, c.name as category_name, c.slug as category_slug
+        FROM products p
+        LEFT JOIN categories c ON p.category_id = c.id
+        WHERE p.id = ?
+        """,
+        (product_id,),
+        one=True
+    )
+    return format_product_row(row)
+
+@router.put("/products/{product_id}", response_model=ProductOut)
+def update_product(
+    product_id: int,
+    product_in: ProductUpdate,
+    admin: dict = Depends(get_current_admin)
+):
+    existing = query_db("SELECT * FROM products WHERE id = ?", (product_id,), one=True)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Producto no encontrado.")
+
+    updates = []
+    params = []
+
+    if product_in.name is not None:
+        updates.append("name = ?")
+        params.append(product_in.name)
+
+    if product_in.description is not None:
+        updates.append("description = ?")
+        params.append(product_in.description)
+
+    if product_in.price_cop is not None:
+        updates.append("price_cop = ?")
+        params.append(product_in.price_cop)
+
+    if product_in.category_id is not None:
+        updates.append("category_id = ?")
+        params.append(product_in.category_id)
+
+    if product_in.sizes is not None:
+        updates.append("sizes = ?")
+        params.append(json.dumps(product_in.sizes))
+
+    if product_in.colors is not None:
+        updates.append("colors = ?")
+        params.append(json.dumps([c.model_dump() for c in product_in.colors]))
+
+    if product_in.images is not None:
+        updates.append("images = ?")
+        params.append(json.dumps(product_in.images))
+
+    if product_in.stock is not None:
+        updates.append("stock = ?")
+        params.append(product_in.stock)
+
+    if product_in.featured is not None:
+        updates.append("featured = ?")
+        params.append(1 if product_in.featured else 0)
+
+    if product_in.is_new is not None:
+        updates.append("is_new = ?")
+        params.append(1 if product_in.is_new else 0)
+
+    if updates:
+        sql = f"UPDATE products SET {', '.join(updates)} WHERE id = ?"
+        params.append(product_id)
+        execute_db(sql, params)
+
+    row = query_db(
+        """
+        SELECT p.*, c.name as category_name, c.slug as category_slug
+        FROM products p
+        LEFT JOIN categories c ON p.category_id = c.id
+        WHERE p.id = ?
+        """,
+        (product_id,),
+        one=True
+    )
+    return format_product_row(row)
+
+@router.delete("/products/{product_id}")
+def delete_product(product_id: int, admin: dict = Depends(get_current_admin)):
+    existing = query_db("SELECT id, name FROM products WHERE id = ?", (product_id,), one=True)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Producto no encontrado.")
+
+    execute_db("DELETE FROM products WHERE id = ?", (product_id,))
+    return {"success": True, "message": f"Producto '{existing['name']}' eliminado correctamente."}
+
+@router.post("/upload")
+async def upload_image(file: UploadFile = File(...), admin: dict = Depends(get_current_admin)):
+    # Validate extension
+    allowed = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg"}
+    ext = os.path.splitext(file.filename)[1].lower()
+    if ext not in allowed:
+        raise HTTPException(status_code=400, detail="Formato de imagen no soportado. Usa JPG, PNG o WebP.")
+
+    filename = f"prod_{uuid.uuid4().hex[:10]}{ext}"
+    file_path = UPLOAD_DIR / filename
+
+    contents = await file.read()
+    with open(file_path, "wb") as f:
+        f.write(contents)
+
+    return {
+        "success": True,
+        "filename": filename,
+        "url": f"/uploads/{filename}"
+    }
+
+@router.get("/settings")
+def get_admin_settings(admin: dict = Depends(get_current_admin)):
+    rows = query_db("SELECT key, value FROM settings")
+    settings_dict = {r["key"]: r["value"] for r in rows}
+    return settings_dict
+
+@router.post("/settings")
+def update_admin_settings(settings_data: dict, admin: dict = Depends(get_current_admin)):
+    for key, value in settings_data.items():
+        execute_db(
+            "INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+            (key, str(value))
+        )
+    return {"success": True, "message": "Configuración guardada correctamente."}
+
+@router.post("/logo-upload")
+async def upload_logo(file: UploadFile = File(...), admin: dict = Depends(get_current_admin)):
+    allowed = {".jpg", ".jpeg", ".png", ".webp", ".svg"}
+    ext = os.path.splitext(file.filename)[1].lower()
+    if ext not in allowed:
+        raise HTTPException(status_code=400, detail="Formato no válido. Usa JPG, PNG, WebP o SVG.")
+
+    filename = f"logo_{uuid.uuid4().hex[:8]}{ext}"
+    file_path = UPLOAD_DIR / filename
+
+    contents = await file.read()
+    with open(file_path, "wb") as f:
+        f.write(contents)
+
+    logo_url = f"/uploads/{filename}"
+    execute_db(
+        "INSERT INTO settings (key, value) VALUES ('logo_url', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+        (logo_url,)
+    )
+
+    return {
+        "success": True,
+        "logo_url": logo_url,
+        "message": "Logotipo de la boutique actualizado correctamente."
+    }
+
