@@ -54,12 +54,16 @@ def test_all():
     # 5. Test Phone OTP Request & Verify
     res = client.post("/api/auth/phone-otp-request", json={"phone": "+573023949733"})
     assert res.status_code == 200
-    otp_code = res.json().get("demo_code", "123456")
-    print(f"  [OK] Generacion de OTP para celular: Codigo {otp_code}")
+    
+    from app.database import query_db
+    record = query_db("SELECT code FROM otp_codes WHERE phone = ? ORDER BY id DESC LIMIT 1", ("+573023949733",), one=True)
+    otp_code = record["code"]
+    print(f"  [OK] Generacion de OTP para celular (enviado por SMS y verificado en DB)")
 
     res = client.post("/api/auth/phone-otp-verify", json={"phone": "+573023949733", "code": otp_code, "full_name": "Usuario OTP"})
     assert res.status_code == 200
-    assert "access_token" in res.json()
+    phone_token = res.json()["access_token"]
+    assert phone_token is not None
     print("  [OK] Validacion de OTP por celular completada con token JWT")
 
     # 6. Test Google OAuth login

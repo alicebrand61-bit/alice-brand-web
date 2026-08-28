@@ -150,20 +150,15 @@ const Auth = {
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Error solicitando código OTP');
       
-      App.showToast(data.message, 'info');
-      if (data.demo_code) {
-        setTimeout(() => {
-          App.showToast(`📲 Código OTP Celular: ${data.demo_code}`, 'info', 8000);
-          const otpInput = document.getElementById('phone-otp-code');
-          if (otpInput) otpInput.value = data.demo_code;
-        }, 600);
-      }
+      App.showToast(data.message, 'success');
+      App.showToast('Revisa los mensajes SMS en tu celular e ingresa el código.', 'info');
       return true;
     } catch (err) {
       App.showToast(err.message, 'error');
       return false;
     }
   },
+
 
   async verifyPhoneOtp(phone, code, fullName) {
     try {

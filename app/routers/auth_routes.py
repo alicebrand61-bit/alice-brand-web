@@ -68,14 +68,12 @@ def request_phone_otp(req: PhoneOtpRequest):
     
     code = generate_otp_code(phone_clean)
     
-    # In production SMS gateway (Twilio, AWS SNS, etc.) would be called here.
-    # We return the code in demo mode to make testing seamless and instant.
     return {
         "success": True,
-        "message": f"Código de verificación enviado al número {phone_clean}.",
-        "demo_code": code, # Convenience for MVP testing
+        "message": f"Código de verificación de 6 dígitos enviado por SMS al celular {phone_clean}.",
         "expires_in_minutes": 10
     }
+
 
 @router.post("/phone-otp-verify", response_model=TokenResponse)
 def verify_phone_otp(req: PhoneOtpVerify):

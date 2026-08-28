@@ -3,7 +3,9 @@ import json
 import uuid
 from typing import List, Optional
 from pathlib import Path
+from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, status
+
 from app.models import ProductCreate, ProductUpdate, ProductOut, OrderOut, OrderStatusUpdate
 from app.database import query_db, execute_db
 from app.auth import get_current_admin
@@ -286,9 +288,28 @@ async def upload_logo(file: UploadFile = File(...), admin: dict = Depends(get_cu
         (logo_url,)
     )
 
-    return {
-        "success": True,
-        "logo_url": logo_url,
-        "message": "Logotipo de la boutique actualizado correctamente."
-    }
+class AdminPasswordChangeRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+@router.post("/change-password")
+def change_admin_password(
+    req: AdminPasswordChangeRequest,
+    admin: dict = Depends(get_current_admin)
+):
+    from app.auth import verify_password, hash_password
+    
+    # Retrieve current admin record with password hash
+    admin_row = query_db("SELECT * FROM users WHERE id = ?", (admin["id"],), one=True)
+    if not admin_row or not verify_password(req.current_password, admin_row["password_hash"]):
+        raise HTTPException(status_code=400, detail="La contraseña actual es incorrecta.")
+
+    if len(req.new_password) < 6:
+        raise HTTPException(status_code=400, detail="La nueva contraseña debe tener al menos 6 caracteres.")
+
+    new_hash = hash_password(req.new_password)
+    execute_db("UPDATE users SET password_hash = ? WHERE id = ?", (new_hash, admin["id"]))
+
+    return {"success": True, "message": "¡Contraseña de Administrador actualizada correctamente!"}
+
 

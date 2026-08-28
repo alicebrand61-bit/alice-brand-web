@@ -436,28 +436,31 @@
       <div id="admin-login-gate" class="max-w-md mx-auto py-16 px-4">
         <div class="bg-white p-8 rounded-3xl shadow-2xl border border-gray-200 text-center space-y-6">
           <div class="w-16 h-16 bg-[#4D0E12] text-white rounded-2xl flex items-center justify-center mx-auto shadow-md">
-            <i data-lucide="shield-alert" class="w-8 h-8"></i>
+            <i data-lucide="lock" class="w-8 h-8"></i>
           </div>
           <div>
-            <h2 class="text-2xl font-serif font-bold text-dark">Portal de Administración</h2>
-            <p class="text-xs text-gray-500 mt-1">Panel privado para gestión de inventario, pedidos y logotipo de Alice Brand.</p>
+            <h2 class="text-2xl font-serif font-bold text-dark">Acceso al Panel de Administración</h2>
+            <p class="text-xs text-gray-500 mt-1">Ingresa con tus credenciales de administrador de Alice Brand.</p>
           </div>
 
-          <div class="p-4 bg-sand/30 rounded-2xl border border-sand-dark text-left text-xs space-y-2">
-            <div class="font-bold text-coffee flex items-center gap-1.5">
-              <i data-lucide="key" class="w-4 h-4 text-[#4D0E12]"></i>
-              Credenciales de Administrador:
+          <form onsubmit="Admin.handleAdminLogin(event)" class="space-y-4 text-left text-xs">
+            <div>
+              <label class="block font-semibold text-coffee mb-1">Correo de Administrador</label>
+              <input type="email" id="admin-login-email" required class="w-full p-3 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12] text-xs" placeholder="tu-correo@alicebrand.com" />
             </div>
-            <div class="font-mono text-dark"><strong>Usuario:</strong> admin@alicebrand.com</div>
-            <div class="font-mono text-dark"><strong>Clave:</strong> admin123</div>
-          </div>
+            <div>
+              <label class="block font-semibold text-coffee mb-1">Contraseña</label>
+              <input type="password" id="admin-login-pass" required class="w-full p-3 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12] text-xs" placeholder="••••••••" />
+            </div>
 
-          <div class="space-y-3">
-            <button onclick="Admin.quickAdminLogin()" class="w-full btn-primary py-3.5 rounded-full font-bold uppercase tracking-wider text-xs shadow-lg flex items-center justify-center gap-2">
+            <button type="submit" class="w-full btn-primary py-3.5 rounded-xl font-bold uppercase tracking-wider text-xs shadow-lg flex items-center justify-center gap-2">
               <i data-lucide="unlock" class="w-4 h-4"></i>
-              <span>Ingresar como Administrador (1 Clic)</span>
+              <span>Ingresar al Panel</span>
             </button>
-            <button onclick="App.navigate('home')" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-full font-bold uppercase tracking-wider text-xs">
+          </form>
+
+          <div class="pt-2 border-t border-gray-100">
+            <button onclick="App.navigate('home')" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-2.5 rounded-xl font-bold uppercase tracking-wider text-[11px]">
               Volver a la Tienda de Clientes
             </button>
           </div>
@@ -708,7 +711,37 @@
                 </button>
               </div>
             </form>
+
+            <!-- Change Admin Password Form -->
+            <div class="border-t border-gray-200 pt-6 space-y-4">
+              <div class="flex items-center gap-2">
+                <i data-lucide="key" class="w-5 h-5 text-[#4D0E12]"></i>
+                <h4 class="font-bold text-sm text-[#4D0E12]">3. Seguridad: Cambiar Contraseña de Administrador</h4>
+              </div>
+              <p class="text-xs text-gray-500">Actualiza tu clave de acceso al panel para mantener tu tienda protegida.</p>
+
+              <form id="admin-change-pass-form" onsubmit="Admin.handleAdminChangePassword(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                <div>
+                  <label class="block font-semibold text-coffee mb-1">Contraseña Actual *</label>
+                  <input type="password" id="admin-current-pass" required class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]" placeholder="••••••••" />
+                </div>
+                <div>
+                  <label class="block font-semibold text-coffee mb-1">Nueva Contraseña (mín 6 car.) *</label>
+                  <input type="password" id="admin-new-pass" minlength="6" required class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]" placeholder="••••••••" />
+                </div>
+                <div>
+                  <label class="block font-semibold text-coffee mb-1">Confirmar Nueva Contraseña *</label>
+                  <input type="password" id="admin-confirm-pass" minlength="6" required class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]" placeholder="••••••••" />
+                </div>
+                <div class="sm:col-span-3 flex justify-end pt-2">
+                  <button type="submit" class="btn-primary px-6 py-2.5 rounded-xl font-bold uppercase tracking-wider text-xs shadow-md">
+                    Actualizar Contraseña
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
+
 
           <!-- TAB 5: GATEWAY CONFIG (Wompi, Bold & PSE) -->
           <div id="admin-tab-gateway" class="hidden bg-white p-8 rounded-3xl border border-[#e4dccb] shadow-sm space-y-6">

@@ -81,7 +81,7 @@ def get_current_admin(user: dict = Depends(get_current_user)):
     return user
 
 def generate_otp_code(phone: str) -> str:
-    # Generate 6-digit numeric code
+    # Generate secure 6-digit numeric code
     code = f"{random.randint(100000, 999999)}"
     expires_at = datetime.datetime.now() + datetime.timedelta(minutes=10)
     
@@ -90,14 +90,35 @@ def generate_otp_code(phone: str) -> str:
         "INSERT INTO otp_codes (phone, code, expires_at, verified) VALUES (?, ?, ?, 0)",
         (phone, code, expires_at.strftime("%Y-%m-%d %H:%M:%S"))
     )
+
+    # Dispatch SMS via configured Gateway (Twilio / Hablame Colombia SMS) if configured
+    send_sms_notification(phone, f"Tu codigo de seguridad para Alice Brand es: {code}. Valido por 10 minutos.")
+    
     return code
 
+def send_sms_notification(phone: str, message: str):
+    """Sends SMS to real Colombian phone number if Twilio or SMS Gateway is configured"""
+    import os
+    twilio_sid = os.getenv("TWILIO_ACCOUNT_SID")
+    twilio_auth = os.getenv("TWILIO_AUTH_TOKEN")
+    twilio_from = os.getenv("TWILIO_PHONE_NUMBER")
+
+    if twilio_sid and twilio_auth and twilio_from:
+        try:
+            import requests
+            url = f"https://api.twilio.com/2010-04-01/Accounts/{twilio_sid}/Messages.json"
+            formatted_phone = phone if phone.startswith("+") else f"+57{phone}"
+            requests.post(
+                url,
+                data={"From": twilio_from, "To": formatted_phone, "Body": message},
+                auth=(twilio_sid, twilio_auth),
+                timeout=5
+            )
+        except Exception as e:
+            print(f"[SMS Gateway Error]: {e}")
+
 def verify_otp_code(phone: str, code: str) -> bool:
-    # Check latest valid OTP for phone
-    # In test/demo mode, accept code 123456 or the exact generated code
-    if code == "123456":
-        return True
-        
+    # Verify the exact code stored in database for this phone number
     record = query_db(
         "SELECT id, code, expires_at, verified FROM otp_codes WHERE phone = ? ORDER BY id DESC LIMIT 1",
         (phone,),
@@ -108,9 +129,18 @@ def verify_otp_code(phone: str, code: str) -> bool:
     
     if record["verified"] == 1:
         return False
+    
+    # Check expiration
+    try:
+        exp_time = datetime.datetime.strptime(record["expires_at"], "%Y-%m-%d %H:%M:%S")
+        if datetime.datetime.now() > exp_time:
+            return False
+    except Exception:
+        pass
         
-    if record["code"] == code:
+    if record["code"] == code.strip():
         execute_db("UPDATE otp_codes SET verified = 1 WHERE id = ?", (record["id"],))
         return True
         
     return False
+

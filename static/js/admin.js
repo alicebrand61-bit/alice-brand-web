@@ -33,13 +33,68 @@ const Admin = {
     if (content) content.classList.remove('hidden');
   },
 
-  async quickAdminLogin() {
-    App.showToast('Iniciando sesión como Administrador...', 'info');
-    const success = await Auth.login('admin@alicebrand.com', 'admin123');
+  async handleAdminLogin(e) {
+    if (e) e.preventDefault();
+    const email = document.getElementById('admin-login-email').value.trim();
+    const pass = document.getElementById('admin-login-pass').value;
+
+    if (!email || !pass) {
+      App.showToast('Por favor ingresa tu correo y contraseña de administrador.', 'warning');
+      return;
+    }
+
+    App.showToast('Autenticando credenciales de administrador...', 'info');
+    const success = await Auth.login(email, pass);
     if (success) {
-      this.init();
+      if (Auth.isAdmin()) {
+        this.init();
+      } else {
+        App.showToast('Esta cuenta no tiene permisos de administrador.', 'error');
+        Auth.logout();
+      }
     }
   },
+
+  async handleAdminChangePassword(e) {
+    if (e) e.preventDefault();
+    const currentPassword = document.getElementById('admin-current-pass').value;
+    const newPassword = document.getElementById('admin-new-pass').value;
+    const confirmPassword = document.getElementById('admin-confirm-pass').value;
+
+    if (newPassword !== confirmPassword) {
+      App.showToast('La nueva contraseña y su confirmación no coinciden.', 'warning');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      App.showToast('La nueva contraseña debe tener al menos 6 caracteres.', 'warning');
+      return;
+    }
+
+    try {
+      App.showToast('Actualizando contraseña de administrador...', 'info');
+      const res = await fetch('/api/admin/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...Auth.getAuthHeaders()
+        },
+        body: JSON.stringify({
+          current_password: currentPassword,
+          new_password: newPassword
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Error al cambiar contraseña');
+
+      App.showToast('¡Contraseña actualizada con éxito! Úsala en tu próximo inicio de sesión.', 'success');
+      document.getElementById('admin-change-pass-form').reset();
+    } catch (err) {
+      App.showToast(err.message, 'error');
+    }
+  },
+
 
   switchTab(tab) {
     this.currentTab = tab;

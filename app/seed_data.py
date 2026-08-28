@@ -1,3 +1,4 @@
+import os
 import json
 from app.database import query_db, execute_db, init_db
 from app.auth import hash_password
@@ -12,13 +13,16 @@ def seed_database():
 
     print("[+] Sembrando base de datos con informacion inicial de Alice Brand...")
 
-    # 1. Seed Users (Admin & Customer)
-    admin_pass = hash_password("admin123")
+    # 1. Seed Users (Admin & Customer from environment variables or custom defaults)
+    admin_email = os.getenv("ADMIN_EMAIL", "admin@alicebrand.com").lower().strip()
+    admin_password = os.getenv("ADMIN_PASSWORD", "admin123")
+    admin_pass_hash = hash_password(admin_password)
+
     customer_pass = hash_password("cliente123")
 
     execute_db(
         "INSERT INTO users (email, full_name, phone, password_hash, role, auth_provider) VALUES (?, ?, ?, ?, ?, ?)",
-        ("admin@alicebrand.com", "Admin Alice Brand", "+573023949733", admin_pass, "admin", "local")
+        (admin_email, "Admin Alice Brand", "+573023949733", admin_pass_hash, "admin", "local")
     )
     execute_db(
         "INSERT INTO users (email, full_name, phone, password_hash, role, auth_provider) VALUES (?, ?, ?, ?, ?, ?)",
