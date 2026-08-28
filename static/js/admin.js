@@ -118,6 +118,7 @@ const Admin = {
     if (tab === 'typography') this.loadTypographyTab();
     if (tab === 'content') this.loadContentTab();
     if (tab === 'sections') this.loadSectionsTab();
+    else if (this.editingSectionId !== null) this.cancelSectionEdit();
 
     if (window.lucide) lucide.createIcons();
   },
@@ -489,6 +490,12 @@ const Admin = {
             <span class="text-[11px] font-semibold text-coffee">Activa</span>
           </label>
 
+          <button type="button" onclick="Admin.editSection(${sec.id})"
+            class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-[#A5BCD6]/30 text-[#4D0E12] hover:bg-[#A5BCD6]/60"
+            title="${fija ? 'Editar los textos de esta seccion' : 'Editar esta seccion'}">
+            <i data-lucide="pencil" class="w-4 h-4"></i>
+          </button>
+
           <button type="button" onclick="Admin.deleteSection(${sec.id})"
             class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${fija ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-red-50 text-red-600 hover:bg-red-100'}"
             ${fija ? 'disabled title="Las secciones fijas solo se pueden ocultar"' : 'title="Eliminar seccion"'}>
@@ -574,37 +581,115 @@ const Admin = {
     }
   },
 
-  async handleCreateSection(e) {
+  // Id de la seccion que se esta editando (null = se esta creando una nueva).
+  editingSectionId: null,
+
+  // Campos del formulario y su input correspondiente.
+  SECTION_FORM_FIELDS: {
+    title: 'new-section-title',
+    subtitle: 'new-section-subtitle',
+    body: 'new-section-body',
+    image_url: 'new-section-image',
+    cta_text: 'new-section-cta-text',
+    cta_link: 'new-section-cta-link'
+  },
+
+  readSectionForm() {
+    const payload = {};
+    Object.entries(this.SECTION_FORM_FIELDS).forEach(([campo, id]) => {
+      const el = document.getElementById(id);
+      payload[campo] = el ? el.value.trim() : '';
+    });
+    return payload;
+  },
+
+  // Carga una seccion en el formulario para editarla.
+  editSection(sectionId) {
+    const sec = this.sections.find(s => s.id === sectionId);
+    if (!sec) return;
+
+    // Las secciones fijas tienen sus textos en la pestana "Textos de la Pagina".
+    if (!sec.is_custom) {
+      App.showToast('Los textos de las secciones fijas se editan en "Textos de la Pagina".', 'info');
+      this.switchTab('content');
+      return;
+    }
+
+    this.editingSectionId = sectionId;
+    Object.entries(this.SECTION_FORM_FIELDS).forEach(([campo, id]) => {
+      const el = document.getElementById(id);
+      if (el) el.value = sec[campo] || '';
+    });
+
+    const heading = document.getElementById('section-form-heading');
+    const hint = document.getElementById('section-form-hint');
+    const submit = document.getElementById('section-form-submit');
+    const cancel = document.getElementById('section-form-cancel');
+    const aviso = document.getElementById('section-form-editing-hint');
+
+    if (heading) heading.innerHTML = '2. Editar secci&oacute;n';
+    if (submit) submit.innerHTML = 'Guardar Cambios';
+    if (cancel) cancel.classList.remove('hidden');
+    if (aviso) {
+      aviso.textContent = `Editando la seccion "${sec.title}". Usa Cancelar para volver a crear una nueva.`;
+      aviso.classList.remove('hidden');
+    }
+
+    document.getElementById('section-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    document.getElementById('new-section-title')?.focus();
+  },
+
+  // Vuelve el formulario al modo "crear seccion nueva".
+  cancelSectionEdit() {
+    this.editingSectionId = null;
+    document.getElementById('section-form')?.reset();
+
+    const heading = document.getElementById('section-form-heading');
+    const submit = document.getElementById('section-form-submit');
+    const cancel = document.getElementById('section-form-cancel');
+    const aviso = document.getElementById('section-form-editing-hint');
+
+    if (heading) heading.innerHTML = '2. Crear una secci&oacute;n nueva';
+    if (submit) submit.innerHTML = 'Crear Secci&oacute;n';
+    if (cancel) cancel.classList.add('hidden');
+    if (aviso) aviso.classList.add('hidden');
+  },
+
+  // Un solo submit sirve para crear y para guardar cambios.
+  async handleSectionFormSubmit(e) {
     e.preventDefault();
-    const payload = {
-      title: document.getElementById('new-section-title').value.trim(),
-      subtitle: document.getElementById('new-section-subtitle').value.trim(),
-      body: document.getElementById('new-section-body').value.trim(),
-      image_url: document.getElementById('new-section-image').value.trim(),
-      cta_text: document.getElementById('new-section-cta-text').value.trim(),
-      cta_link: document.getElementById('new-section-cta-link').value.trim(),
-      enabled: true
-    };
+    const payload = this.readSectionForm();
 
     if (!payload.title) {
       App.showToast('La seccion necesita un titulo.', 'error');
       return;
     }
 
+    const editando = this.editingSectionId !== null;
+    const url = editando
+      ? `/api/admin/sections/${this.editingSectionId}`
+      : '/api/admin/sections';
+    if (!editando) payload.enabled = true;
+
     try {
-      App.showToast('Creando la nueva seccion...', 'info');
-      const res = await fetch('/api/admin/sections', {
-        method: 'POST',
+      App.showToast(editando ? 'Guardando los cambios...' : 'Creando la nueva seccion...', 'info');
+      const res = await fetch(url, {
+        method: editando ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json', ...Auth.getAuthHeaders() },
         body: JSON.stringify(payload)
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || 'No se pudo crear la seccion.');
+      if (!res.ok) throw new Error(data.detail || 'No se pudieron guardar los cambios.');
 
-      e.target.reset();
+      this.cancelSectionEdit();
       await this.loadSectionsTab();
       await App.fetchSections();
-      App.showToast(`Seccion "${data.title}" creada y publicada en la portada!`, 'success');
+      App.showToast(
+        editando
+          ? `Seccion "${data.title}" actualizada!`
+          : `Seccion "${data.title}" creada y publicada en la portada!`,
+        'success'
+      );
     } catch (err) {
       App.showToast(err.message, 'error');
     }

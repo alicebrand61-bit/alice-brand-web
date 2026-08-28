@@ -936,8 +936,9 @@
 
             <!-- Crear seccion nueva -->
             <div class="bg-[#FAF8F5] p-6 rounded-2xl border border-[#e4dccb] space-y-4">
-              <h4 class="font-bold text-sm text-[#4D0E12]">2. Crear una secci&oacute;n nueva</h4>
-              <form onsubmit="Admin.handleCreateSection(event)" class="space-y-3 text-xs">
+              <h4 id="section-form-heading" class="font-bold text-sm text-[#4D0E12]">2. Crear una secci&oacute;n nueva</h4>
+              <p id="section-form-editing-hint" class="hidden text-[11px] text-[#4D0E12] bg-[#F5EFC6] px-3 py-2 rounded-lg font-semibold"></p>
+              <form id="section-form" onsubmit="Admin.handleSectionFormSubmit(event)" class="space-y-3 text-xs">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label class="block font-semibold text-coffee mb-1">T&iacute;tulo de la secci&oacute;n *</label>
@@ -966,8 +967,11 @@
                     <input type="text" id="new-section-cta-link" placeholder="/catalogo o https://..." class="w-full p-2.5 border border-gray-300 rounded-xl font-mono text-[11px] focus:ring-1 focus:ring-[#4D0E12]" />
                   </div>
                 </div>
-                <div class="flex justify-end pt-2">
-                  <button type="submit" class="btn-primary px-8 py-3 rounded-xl font-bold uppercase tracking-wider shadow-lg">
+                <div class="flex justify-end gap-3 pt-2">
+                  <button type="button" id="section-form-cancel" onclick="Admin.cancelSectionEdit()" class="hidden px-6 py-3 rounded-xl font-bold uppercase tracking-wider border border-gray-300 text-coffee hover:bg-gray-100 transition-colors">
+                    Cancelar
+                  </button>
+                  <button type="submit" id="section-form-submit" class="btn-primary px-8 py-3 rounded-xl font-bold uppercase tracking-wider shadow-lg">
                     Crear Secci&oacute;n
                   </button>
                 </div>
