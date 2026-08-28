@@ -16,6 +16,10 @@
   --color-dark: #231815;           /* Deep Black Base */
   --color-bg: #FAF8F5;             /* Clean Ivory Sand Background */
   --color-surface: #FFFFFF;
+
+  /* Tipografia editable desde el panel de administracion */
+  --font-heading: 'Cormorant Garamond';
+  --font-body: 'Plus Jakarta Sans';
 }
 
 * {
@@ -25,7 +29,7 @@
 }
 
 body {
-  font-family: 'Plus Jakarta Sans', 'Poppins', 'Outfit', sans-serif;
+  font-family: var(--font-body), 'Plus Jakarta Sans', 'Poppins', 'Outfit', sans-serif;
   background-color: var(--color-bg);
   color: var(--color-dark);
   line-height: 1.6;
@@ -33,7 +37,13 @@ body {
 }
 
 h1, h2, h3, h4, .font-serif {
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: var(--font-heading), 'Cormorant Garamond', Georgia, serif;
+}
+
+/* La tipografia se puede cambiar desde el panel de administracion.
+   App.applySettingsToDOM() sobrescribe estas variables en tiempo real. */
+.font-sans {
+  font-family: var(--font-body), 'Plus Jakarta Sans', 'Poppins', 'Outfit', sans-serif;
 }
 
 /* Custom Scrollbar */

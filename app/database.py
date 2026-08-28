@@ -141,13 +141,32 @@ def init_db():
         ("wompi_public_key", "pub_test_Q5yDA9xoKdePzhSGeVe9HAUr1jiY25Er"),
         ("wompi_integrity_secret", "test_integrity_45KjhD837shd82jshd9238"),
         ("bold_api_key", ""),
-        ("payment_mode", "wompi_pse")
+        ("payment_mode", "wompi_pse"),
+        # Typography settings
+        ("font_heading", "Cormorant Garamond"),
+        ("font_body", "Plus Jakarta Sans"),
+        # Editable Page Texts (CMS)
+        ("announcement_bar_text", "✨ ENVÍOS GRATIS a toda Colombia por compras superiores a $200.000 COP | Usa el cupón ALICE10 para 10% OFF"),
+        ("hero_tag", "Colección Costera 2026 · Hecho en Colombia 🇨🇴"),
+        ("hero_title", "Elegancia, Comodidad & Siluetas para una Mujer Real"),
+        ("hero_subtitle", "Descubre trajes de baño de autor, kimonos en seda vaporosa y accesorios artesanales. Confección colombiana de lujo con protección UPF 50+ y detalles en baño de oro de 24k."),
+        ("hero_cta_text", "Comprar Colección"),
+        ("about_title", "Sobre Alice Brand"),
+        ("about_subtitle", "Nacida en Colombia con la misión de resaltar la belleza y autenticidad de cada mujer a través de prendas de playa elegantes, versátiles y duraderas."),
+        ("about_story_heading", "Confección Consciente & Amor por los Detalles"),
+        ("about_story_p1", "En Alice Brand fusionamos la tradición textil colombiana con siluetas de alta moda. Cada prenda es elaborada con amor en talleres locales por mujeres cabeza de hogar."),
+        ("about_story_p2", "Nuestros tejidos incorporan tecnologías de secado ultra rápido y protección solar UPF 50+, combinados con nuestra icónica paleta Vinotinto (#4D0E12) y Azul Cielo (#A5BCD6)."),
+        ("about_image_url", "https://images.unsplash.com/photo-1582639510494-c80b5de9f148?auto=format&fit=crop&w=1000&q=85"),
+        ("whatsapp_assistance_title", "¿Dudas con tu talla? Te asesoramos en tiempo real por WhatsApp"),
+        ("whatsapp_assistance_desc", "Nuestras asesoras de moda te guían para encontrar la prenda perfecta para tu cuerpo antes de comprar."),
+        ("footer_about", "Boutique colombiana de trajes de baño, pareos y complementos de lujo costero. Diseños atemporales confeccionados con pasión y materiales de alta durabilidad.")
     ]
 
     for k, v in default_settings:
         cursor.execute("INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)", (k, v))
 
     conn.commit()
+
     conn.close()
 
 def query_db(query, args=(), one=False):

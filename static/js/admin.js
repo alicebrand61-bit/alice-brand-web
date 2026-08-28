@@ -98,7 +98,7 @@ const Admin = {
 
   switchTab(tab) {
     this.currentTab = tab;
-    const tabs = ['stats', 'products', 'orders', 'brand', 'gateway'];
+    const tabs = ['stats', 'products', 'orders', 'brand', 'typography', 'content', 'gateway'];
 
     tabs.forEach(t => {
       const section = document.getElementById(`admin-tab-${t}`);
@@ -115,6 +115,8 @@ const Admin = {
     if (tab === 'products') this.renderProductsTable();
     if (tab === 'stats') this.loadStats();
     if (tab === 'brand') this.loadSettings();
+    if (tab === 'typography') this.loadTypographyTab();
+    if (tab === 'content') this.loadContentTab();
 
     if (window.lucide) lucide.createIcons();
   },
@@ -242,6 +244,186 @@ const Admin = {
       App.showToast('¡Logotipo actualizado con éxito en toda la boutique!', 'success');
     } catch (e) {
       App.showToast(e.message, 'error');
+    }
+  },
+
+  // ------------------------------------------------------------------
+  // TIPOGRAFIA: fuentes de Microsoft Word (sistema) + Google Fonts
+  // ------------------------------------------------------------------
+
+  // Fuentes clasicas de Microsoft Word, ya instaladas en el equipo del visitante.
+  WORD_FONTS: [
+    'Arial', 'Arial Black', 'Calibri', 'Cambria', 'Candara', 'Comic Sans MS',
+    'Consolas', 'Constantia', 'Corbel', 'Courier New', 'Franklin Gothic Medium',
+    'Garamond', 'Georgia', 'Impact', 'Lucida Sans', 'Palatino Linotype',
+    'Segoe UI', 'Tahoma', 'Times New Roman', 'Trebuchet MS', 'Verdana'
+  ],
+
+  // Seleccion popular de Google Fonts (se puede escribir cualquier otra a mano).
+  GOOGLE_FONTS: [
+    'Cormorant Garamond', 'Playfair Display', 'Plus Jakarta Sans', 'Poppins',
+    'Outfit', 'Montserrat', 'Lato', 'Open Sans', 'Roboto', 'Raleway',
+    'Nunito', 'Inter', 'Work Sans', 'Merriweather', 'Lora', 'Libre Baskerville',
+    'Cinzel', 'Marcellus', 'Josefin Sans', 'Quicksand', 'Dancing Script',
+    'Great Vibes', 'Bodoni Moda', 'DM Serif Display', 'Prata', 'Italiana'
+  ],
+
+  loadTypographyTab() {
+    this.buildFontSelect('heading');
+    this.buildFontSelect('body');
+
+    const s = this.settings;
+    const headingInput = document.getElementById('settings-font-heading');
+    const bodyInput = document.getElementById('settings-font-body');
+    if (headingInput) headingInput.value = s.font_heading || 'Cormorant Garamond';
+    if (bodyInput) bodyInput.value = s.font_body || 'Plus Jakarta Sans';
+
+    this.syncFontSelectFromInput('heading');
+    this.syncFontSelectFromInput('body');
+    this.updateFontPreview();
+  },
+
+  buildFontSelect(kind) {
+    const select = document.getElementById(`settings-font-${kind}-select`);
+    if (!select || select.dataset.built === '1') return;
+
+    const wordGroup = this.WORD_FONTS
+      .map(f => `<option value="${f}">${f}</option>`).join('');
+    const googleGroup = this.GOOGLE_FONTS
+      .map(f => `<option value="${f}">${f}</option>`).join('');
+
+    select.innerHTML = `
+      <optgroup label="Fuentes de Microsoft Word (instaladas en el equipo)">${wordGroup}</optgroup>
+      <optgroup label="Google Fonts (se descargan automaticamente)">${googleGroup}</optgroup>
+      <option value="__custom__">Otra fuente (escribirla abajo)...</option>
+    `;
+    select.dataset.built = '1';
+  },
+
+  // Si el nombre guardado esta en la lista lo marca; si no, deja "Otra fuente".
+  syncFontSelectFromInput(kind) {
+    const select = document.getElementById(`settings-font-${kind}-select`);
+    const input = document.getElementById(`settings-font-${kind}`);
+    if (!select || !input) return;
+
+    const current = (input.value || '').trim();
+    const known = [...this.WORD_FONTS, ...this.GOOGLE_FONTS].includes(current);
+    select.value = known ? current : '__custom__';
+  },
+
+  onFontSelectChange(kind) {
+    const select = document.getElementById(`settings-font-${kind}-select`);
+    const input = document.getElementById(`settings-font-${kind}`);
+    if (!select || !input) return;
+
+    if (select.value !== '__custom__') {
+      input.value = select.value;
+    }
+    input.focus();
+    this.updateFontPreview();
+  },
+
+  // Vista previa inmediata dentro del panel, sin necesidad de guardar.
+  updateFontPreview() {
+    const heading = (document.getElementById('settings-font-heading')?.value || '').trim();
+    const body = (document.getElementById('settings-font-body')?.value || '').trim();
+
+    // Carga anticipada de las fuentes de Google usadas en la vista previa.
+    const families = [heading, body]
+      .filter(f => f && !App.SYSTEM_FONTS[f])
+      .filter((f, i, arr) => arr.indexOf(f) === i)
+      .map(f => `family=${encodeURIComponent(f).replace(/%20/g, '+')}:wght@300;400;500;600;700`);
+
+    let preview = document.getElementById('admin-font-preview-link');
+    if (!preview) {
+      preview = document.createElement('link');
+      preview.id = 'admin-font-preview-link';
+      preview.rel = 'stylesheet';
+      document.head.appendChild(preview);
+    }
+    if (families.length) {
+      preview.href = `https://fonts.googleapis.com/css2?${families.join('&')}&display=swap`;
+    } else {
+      preview.removeAttribute('href');
+    }
+
+    const hEl = document.getElementById('font-preview-heading');
+    const bEl = document.getElementById('font-preview-body');
+    if (hEl) hEl.style.fontFamily = App.buildFontStack(heading || 'Cormorant Garamond', 'Georgia, serif');
+    if (bEl) bEl.style.fontFamily = App.buildFontStack(body || 'Plus Jakarta Sans', 'sans-serif');
+  },
+
+  async handleSaveTypography(e) {
+    e.preventDefault();
+    const heading = document.getElementById('settings-font-heading').value.trim();
+    const body = document.getElementById('settings-font-body').value.trim();
+
+    if (!heading || !body) {
+      App.showToast('Debes indicar una fuente para los titulos y otra para el texto.', 'error');
+      return;
+    }
+
+    await this.saveSettingsPayload(
+      { font_heading: heading, font_body: body },
+      'Guardando tipografia...',
+      'Tipografia actualizada en toda la tienda!'
+    );
+  },
+
+  // ------------------------------------------------------------------
+  // TEXTOS EDITABLES DE LA PAGINA (CMS)
+  // ------------------------------------------------------------------
+
+  CMS_FIELDS: [
+    'announcement_bar_text',
+    'hero_tag', 'hero_title', 'hero_subtitle', 'hero_cta_text',
+    'about_title', 'about_subtitle', 'about_story_heading',
+    'about_story_p1', 'about_story_p2', 'about_image_url',
+    'whatsapp_assistance_title', 'whatsapp_assistance_desc',
+    'footer_about'
+  ],
+
+  loadContentTab() {
+    this.CMS_FIELDS.forEach(key => {
+      const el = document.getElementById(`cms-${key}`);
+      if (el) el.value = this.settings[key] || '';
+    });
+  },
+
+  async handleSaveContent(e) {
+    e.preventDefault();
+    const payload = {};
+    this.CMS_FIELDS.forEach(key => {
+      const el = document.getElementById(`cms-${key}`);
+      if (el) payload[key] = el.value.trim();
+    });
+
+    await this.saveSettingsPayload(
+      payload,
+      'Guardando textos de la pagina...',
+      'Textos actualizados correctamente!'
+    );
+  },
+
+  // Helper compartido: envia ajustes al backend y refresca la tienda.
+  async saveSettingsPayload(payload, loadingMsg, successMsg) {
+    try {
+      App.showToast(loadingMsg, 'info');
+      const res = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...Auth.getAuthHeaders()
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error('No se pudieron guardar los cambios.');
+
+      Object.assign(this.settings, payload);
+      await App.fetchSettings();
+      App.showToast(successMsg, 'success');
+    } catch (err) {
+      App.showToast(err.message, 'error');
     }
   },
 

@@ -37,8 +37,8 @@
             dark: '#231815'
           },
           fontFamily: {
-            serif: ['"Cormorant Garamond"', 'Georgia', 'serif'],
-            sans: ['"Plus Jakarta Sans"', '"Poppins"', '"Outfit"', 'sans-serif'],
+            serif: ['var(--font-heading)', '"Cormorant Garamond"', 'Georgia', 'serif'],
+            sans: ['var(--font-body)', '"Plus Jakarta Sans"', '"Poppins"', '"Outfit"', 'sans-serif'],
           }
         }
       }
@@ -53,6 +53,10 @@
 
   <!-- Alice Brand Stylesheet -->
   <link rel="stylesheet" href="/static/css/style.css" />
+
+  <!-- Tipografia dinamica: App.applyTypography() reescribe este href con la
+       fuente de Google elegida desde el panel de administracion. -->
+  <link id="dynamic-google-fonts" rel="stylesheet" href="" />
 </head>
 <body class="bg-[#FAF8F5] text-[#231815] min-h-screen flex flex-col antialiased selection:bg-[#4D0E12] selection:text-white">
 
@@ -63,9 +67,7 @@
     
     <!-- Announcement Bar (Pauly Lingerie Style) -->
     <div class="bg-[#4D0E12] text-[#F5EFC6] text-xs py-2 px-4 text-center font-medium tracking-wide flex justify-center items-center gap-3">
-      <span>✨ <strong>ENVÍOS GRATIS</strong> a toda Colombia por compras superiores a $200.000 COP</span>
-      <span class="hidden sm:inline">|</span>
-      <span class="hidden sm:inline">Usa el cupón <strong class="bg-[#F5EFC6] text-[#4D0E12] px-2 py-0.5 rounded font-bold">ALICE10</strong> para 10% OFF</span>
+      <span data-cms="announcement_bar_text">✨ <strong>ENVÍOS GRATIS</strong> a toda Colombia por compras superiores a $200.000 COP | Usa el cupón <strong class="bg-[#F5EFC6] text-[#4D0E12] px-2 py-0.5 rounded font-bold">ALICE10</strong> para 10% OFF</span>
     </div>
 
     <!-- Header / Navbar -->
@@ -171,20 +173,20 @@
           <div class="lg:col-span-7 space-y-6">
             <div class="inline-flex items-center gap-2 bg-[#A5BCD6]/40 text-[#4D0E12] px-4 py-1.5 rounded-full text-xs font-bold tracking-wider uppercase border border-[#A5BCD6]">
               <span class="w-2 h-2 rounded-full bg-[#4D0E12] animate-ping"></span>
-              Colección Costera 2026 · Hecho en Colombia 🇨🇴
+              <span data-cms="hero_tag">Colección Costera 2026 · Hecho en Colombia 🇨🇴</span>
             </div>
             
-            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-serif font-bold text-[#231815] leading-[1.15]">
+            <h1 data-cms="hero_title" class="text-4xl sm:text-5xl lg:text-6xl font-serif font-bold text-[#231815] leading-[1.15]">
               Elegancia, Comodidad &amp; Siluetas para una Mujer Real
             </h1>
 
-            <p class="text-base sm:text-lg text-coffee/85 max-w-xl font-light leading-relaxed">
+            <p data-cms="hero_subtitle" class="text-base sm:text-lg text-coffee/85 max-w-xl font-light leading-relaxed">
               Descubre trajes de baño de autor, kimonos en seda vaporosa y accesorios artesanales. Confección colombiana de lujo con protección UPF 50+ y detalles en baño de oro de 24k.
             </p>
 
             <div class="flex flex-wrap items-center gap-4 pt-2">
               <button onclick="App.navigate('catalog')" class="btn-primary px-8 py-4 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-xl">
-                <span>Comprar Colección</span>
+                <span data-cms="hero_cta_text">Comprar Colección</span>
                 <i data-lucide="arrow-right" class="w-4 h-4"></i>
               </button>
               <button onclick="App.navigate('catalog', 'vestidos-de-bano')" class="btn-sand px-7 py-4 rounded-full text-xs font-bold uppercase tracking-wider">
@@ -299,10 +301,10 @@
             <span class="bg-[#F5EFC6] text-[#4D0E12] text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
               Asesoría Personalizada de Tallas
             </span>
-            <h3 class="text-3xl sm:text-4xl font-serif font-bold leading-tight">
+            <h3 data-cms="whatsapp_assistance_title" class="text-3xl sm:text-4xl font-serif font-bold leading-tight">
               ¿Dudas con tu talla? Te asesoramos en tiempo real por WhatsApp
             </h3>
-            <p class="text-sm text-white/90 font-light">
+            <p data-cms="whatsapp_assistance_desc" class="text-sm text-white/90 font-light">
               Nuestras asesoras de moda te guían para encontrar la prenda perfecta para tu cuerpo antes de comprar.
             </p>
           </div>
@@ -347,20 +349,20 @@
     <div id="view-about" class="hidden max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-14 space-y-12">
       <div class="text-center max-w-2xl mx-auto space-y-3">
         <span class="text-xs font-bold uppercase tracking-widest text-[#4D0E12]">Nuestra Historia</span>
-        <h1 class="text-4xl font-serif font-bold text-dark">Sobre Alice Brand</h1>
-        <p class="text-sm text-coffee/80 leading-relaxed">
+        <h1 data-cms="about_title" class="text-4xl font-serif font-bold text-dark">Sobre Alice Brand</h1>
+        <p data-cms="about_subtitle" class="text-sm text-coffee/80 leading-relaxed">
           Nacida en Colombia con la misión de resaltar la belleza y autenticidad de cada mujer a través de prendas de playa elegantes, versátiles y duraderas.
         </p>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
-        <img src="https://images.unsplash.com/photo-1582639510494-c80b5de9f148?auto=format&fit=crop&w=1000&q=85" alt="Taller Alice Brand" class="rounded-3xl shadow-xl border-4 border-white" />
+        <img id="about-image" src="https://images.unsplash.com/photo-1582639510494-c80b5de9f148?auto=format&fit=crop&w=1000&q=85" alt="Taller Alice Brand" class="rounded-3xl shadow-xl border-4 border-white" />
         <div class="space-y-6 text-sm text-coffee/90 leading-relaxed font-light">
-          <h3 class="text-2xl font-serif font-bold text-dark">Confección Consciente &amp; Amor por los Detalles</h3>
-          <p>
+          <h3 data-cms="about_story_heading" class="text-2xl font-serif font-bold text-dark">Confección Consciente &amp; Amor por los Detalles</h3>
+          <p data-cms="about_story_p1">
             En <strong>Alice Brand</strong> fusionamos la tradición textil colombiana con siluetas de alta moda. Cada prenda es elaborada con amor en talleres locales por mujeres cabeza de hogar.
           </p>
-          <p>
+          <p data-cms="about_story_p2">
             Nuestros tejidos incorporan tecnologías de secado ultra rápido y protección solar UPF 50+, combinados con nuestra icónica paleta Vinotinto (#4D0E12) y Azul Cielo (#A5BCD6).
           </p>
           <div class="pt-2">
@@ -501,6 +503,16 @@
               <button id="admin-nav-brand" onclick="Admin.switchTab('brand')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-300 hover:bg-white/10 hover:text-white">
                 <i data-lucide="image" class="w-4 h-4"></i>
                 <span>Cambiar Logo &amp; Marca</span>
+              </button>
+
+              <button id="admin-nav-typography" onclick="Admin.switchTab('typography')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-300 hover:bg-white/10 hover:text-white">
+                <i data-lucide="type" class="w-4 h-4"></i>
+                <span>Tipografía</span>
+              </button>
+
+              <button id="admin-nav-content" onclick="Admin.switchTab('content')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-300 hover:bg-white/10 hover:text-white">
+                <i data-lucide="file-text" class="w-4 h-4"></i>
+                <span>Textos de la Página</span>
               </button>
 
               <button id="admin-nav-gateway" onclick="Admin.switchTab('gateway')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-300 hover:bg-white/10 hover:text-white">
@@ -743,7 +755,156 @@
           </div>
 
 
-          <!-- TAB 5: GATEWAY CONFIG (Wompi, Bold & PSE) -->
+          <!-- TAB 5: TYPOGRAPHY (Fuentes de Google + fuentes de Microsoft Word) -->
+          <div id="admin-tab-typography" class="hidden bg-white p-8 rounded-3xl border border-[#e4dccb] shadow-sm space-y-6">
+            <div class="flex items-center gap-3 border-b border-gray-100 pb-4">
+              <div class="w-12 h-12 rounded-2xl bg-[#4D0E12] text-white flex items-center justify-center">
+                <i data-lucide="type" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <h3 class="font-serif font-bold text-2xl text-dark">Tipografía de la Tienda</h3>
+                <p class="text-xs text-gray-500">Elige la fuente de los títulos y la del texto. Incluye las fuentes clásicas de Microsoft Word y el catálogo de Google Fonts.</p>
+              </div>
+            </div>
+
+            <form onsubmit="Admin.handleSaveTypography(event)" class="space-y-6 text-xs">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+
+                <!-- Heading font -->
+                <div class="space-y-2">
+                  <label class="block font-semibold text-coffee">Fuente de Títulos (h1, h2, h3)</label>
+                  <select id="settings-font-heading-select" onchange="Admin.onFontSelectChange('heading')" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12] bg-white"></select>
+                  <input type="text" id="settings-font-heading" oninput="Admin.updateFontPreview()" placeholder="Escribe el nombre exacto de la fuente" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]" />
+                  <p class="text-[11px] text-gray-400">Puedes escribir cualquier fuente de <a href="https://fonts.google.com" target="_blank" class="underline text-[#4D0E12]">fonts.google.com</a> con su nombre exacto.</p>
+                </div>
+
+                <!-- Body font -->
+                <div class="space-y-2">
+                  <label class="block font-semibold text-coffee">Fuente del Texto General</label>
+                  <select id="settings-font-body-select" onchange="Admin.onFontSelectChange('body')" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12] bg-white"></select>
+                  <input type="text" id="settings-font-body" oninput="Admin.updateFontPreview()" placeholder="Escribe el nombre exacto de la fuente" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]" />
+                  <p class="text-[11px] text-gray-400">Las fuentes de Microsoft Word (Arial, Calibri, Times New Roman...) no necesitan descarga.</p>
+                </div>
+              </div>
+
+              <!-- Live preview -->
+              <div class="bg-[#FAF8F5] border border-[#e4dccb] rounded-2xl p-6 space-y-3">
+                <span class="text-[11px] font-bold uppercase tracking-widest text-[#4D0E12]">Vista previa en vivo</span>
+                <h2 id="font-preview-heading" class="text-3xl font-bold text-dark">Elegancia, Comodidad &amp; Siluetas</h2>
+                <p id="font-preview-body" class="text-sm text-coffee/90 leading-relaxed">
+                  Descubre trajes de baño de autor, kimonos en seda vaporosa y accesorios artesanales.
+                  Confección colombiana de lujo — 1234567890.
+                </p>
+              </div>
+
+              <div class="pt-2 border-t border-gray-100 flex justify-end">
+                <button type="submit" class="btn-primary px-8 py-3 rounded-xl font-bold uppercase tracking-wider shadow-lg">
+                  Guardar Tipografía
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- TAB 6: PAGE CONTENT (Textos editables del sitio) -->
+          <div id="admin-tab-content" class="hidden bg-white p-8 rounded-3xl border border-[#e4dccb] shadow-sm space-y-6">
+            <div class="flex items-center gap-3 border-b border-gray-100 pb-4">
+              <div class="w-12 h-12 rounded-2xl bg-[#4D0E12] text-white flex items-center justify-center">
+                <i data-lucide="file-text" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <h3 class="font-serif font-bold text-2xl text-dark">Textos de la Página</h3>
+                <p class="text-xs text-gray-500">Edita los textos visibles de la tienda: barra de anuncios, portada, sección Sobre Nosotros y pie de página.</p>
+              </div>
+            </div>
+
+            <form onsubmit="Admin.handleSaveContent(event)" class="space-y-6 text-xs">
+
+              <!-- Announcement bar -->
+              <div class="bg-[#FAF8F5] p-5 rounded-2xl border border-[#e4dccb] space-y-3">
+                <h4 class="font-bold text-sm text-[#4D0E12]">1. Barra de Anuncios (parte superior)</h4>
+                <textarea id="cms-announcement_bar_text" rows="2" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]"></textarea>
+              </div>
+
+              <!-- Hero -->
+              <div class="bg-[#FAF8F5] p-5 rounded-2xl border border-[#e4dccb] space-y-3">
+                <h4 class="font-bold text-sm text-[#4D0E12]">2. Portada Principal (Hero)</h4>
+                <div>
+                  <label class="block font-semibold text-coffee mb-1">Etiqueta superior</label>
+                  <input type="text" id="cms-hero_tag" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]" />
+                </div>
+                <div>
+                  <label class="block font-semibold text-coffee mb-1">Título principal</label>
+                  <textarea id="cms-hero_title" rows="2" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]"></textarea>
+                </div>
+                <div>
+                  <label class="block font-semibold text-coffee mb-1">Subtítulo / descripción</label>
+                  <textarea id="cms-hero_subtitle" rows="3" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]"></textarea>
+                </div>
+                <div>
+                  <label class="block font-semibold text-coffee mb-1">Texto del botón principal</label>
+                  <input type="text" id="cms-hero_cta_text" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]" />
+                </div>
+              </div>
+
+              <!-- About us -->
+              <div class="bg-[#FAF8F5] p-5 rounded-2xl border border-[#e4dccb] space-y-3">
+                <h4 class="font-bold text-sm text-[#4D0E12]">3. Sección Sobre Nosotros</h4>
+                <div>
+                  <label class="block font-semibold text-coffee mb-1">Título</label>
+                  <input type="text" id="cms-about_title" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]" />
+                </div>
+                <div>
+                  <label class="block font-semibold text-coffee mb-1">Subtítulo / introducción</label>
+                  <textarea id="cms-about_subtitle" rows="3" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]"></textarea>
+                </div>
+                <div>
+                  <label class="block font-semibold text-coffee mb-1">Título de la historia</label>
+                  <input type="text" id="cms-about_story_heading" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]" />
+                </div>
+                <div>
+                  <label class="block font-semibold text-coffee mb-1">Primer párrafo</label>
+                  <textarea id="cms-about_story_p1" rows="3" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]"></textarea>
+                </div>
+                <div>
+                  <label class="block font-semibold text-coffee mb-1">Segundo párrafo</label>
+                  <textarea id="cms-about_story_p2" rows="3" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]"></textarea>
+                </div>
+                <div>
+                  <label class="block font-semibold text-coffee mb-1">URL de la imagen de la sección</label>
+                  <input type="text" id="cms-about_image_url" class="w-full p-2.5 border border-gray-300 rounded-xl font-mono text-[11px] focus:ring-1 focus:ring-[#4D0E12]" />
+                </div>
+              </div>
+
+              <!-- WhatsApp banner -->
+              <div class="bg-[#FAF8F5] p-5 rounded-2xl border border-[#e4dccb] space-y-3">
+                <h4 class="font-bold text-sm text-[#4D0E12]">4. Banner de Asesoría por WhatsApp</h4>
+                <div>
+                  <label class="block font-semibold text-coffee mb-1">Título</label>
+                  <textarea id="cms-whatsapp_assistance_title" rows="2" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]"></textarea>
+                </div>
+                <div>
+                  <label class="block font-semibold text-coffee mb-1">Descripción</label>
+                  <textarea id="cms-whatsapp_assistance_desc" rows="2" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]"></textarea>
+                </div>
+              </div>
+
+              <!-- Footer -->
+              <div class="bg-[#FAF8F5] p-5 rounded-2xl border border-[#e4dccb] space-y-3">
+                <h4 class="font-bold text-sm text-[#4D0E12]">5. Pie de Página</h4>
+                <label class="block font-semibold text-coffee mb-1">Descripción de la marca</label>
+                <textarea id="cms-footer_about" rows="3" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]"></textarea>
+              </div>
+
+              <div class="pt-2 border-t border-gray-100 flex justify-end">
+                <button type="submit" class="btn-primary px-8 py-3 rounded-xl font-bold uppercase tracking-wider shadow-lg">
+                  Guardar Textos de la Página
+                </button>
+              </div>
+            </form>
+          </div>
+
+
+          <!-- TAB 7: GATEWAY CONFIG (Wompi, Bold & PSE) -->
           <div id="admin-tab-gateway" class="hidden bg-white p-8 rounded-3xl border border-[#e4dccb] shadow-sm space-y-6">
             <div class="flex items-center gap-3">
               <div class="w-12 h-12 rounded-2xl bg-[#4D0E12] text-white flex items-center justify-center">
@@ -1393,7 +1554,7 @@
           
           <div class="space-y-4">
             <img src="/static/images/logo-ab.svg" alt="Alice Brand" class="brand-logo-img h-12 w-auto brightness-200 invert" />
-            <p class="text-xs text-white/70 leading-relaxed font-light">
+            <p data-cms="footer_about" class="text-xs text-white/70 leading-relaxed font-light">
               Boutique colombiana de trajes de baño, pareos y complementos de lujo costero. Diseños atemporales confeccionados con pasión y materiales de alta durabilidad.
             </p>
             <div class="flex items-center gap-3 pt-2">

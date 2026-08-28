@@ -45,8 +45,22 @@ def get_public_settings():
         "instagram_handle": settings_dict.get("instagram_handle", "@alicee_brand"),
         "google_client_id": settings_dict.get("google_client_id", ""),
         "wompi_public_key": settings_dict.get("wompi_public_key", "pub_test_Q5yDA9xoKdePzhSGeVe9HAUr1jiY25Er"),
-        "payment_mode": settings_dict.get("payment_mode", "wompi_pse")
+        "payment_mode": settings_dict.get("payment_mode", "wompi_pse"),
+        # Typography (editable desde el panel de administracion)
+        "font_heading": settings_dict.get("font_heading", "Cormorant Garamond"),
+        "font_body": settings_dict.get("font_body", "Plus Jakarta Sans"),
     }
+
+    # Textos editables de la pagina (CMS). Se exponen todos los que comiencen
+    # con alguno de estos prefijos, para no tener que tocar el backend cada vez
+    # que se agregue un texto nuevo en el frontend.
+    CMS_PREFIXES = (
+        "announcement_", "hero_", "about_", "whatsapp_assistance_", "footer_"
+    )
+    for key, value in settings_dict.items():
+        if key.startswith(CMS_PREFIXES):
+            safe_settings[key] = value
+
     return safe_settings
 
 @router.get("/categories", response_model=List[CategoryOut])

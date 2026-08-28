@@ -56,6 +56,110 @@ const App = {
     igLinks.forEach(a => {
       if (this.settings.instagram_url) a.href = this.settings.instagram_url;
     });
+
+    this.applyTypography();
+    this.applyCmsTexts();
+  },
+
+  // Fuentes clasicas de Microsoft Word / del sistema. Ya estan instaladas en el
+  // equipo del visitante, por lo que NO se piden a Google Fonts.
+  SYSTEM_FONTS: {
+    'Arial': "Arial, Helvetica, sans-serif",
+    'Arial Black': "'Arial Black', Gadget, sans-serif",
+    'Calibri': "Calibri, Candara, Segoe, 'Segoe UI', Optima, sans-serif",
+    'Cambria': "Cambria, Georgia, serif",
+    'Candara': "Candara, Calibri, Segoe, sans-serif",
+    'Comic Sans MS': "'Comic Sans MS', 'Comic Sans', cursive",
+    'Consolas': "Consolas, 'Courier New', monospace",
+    'Constantia': "Constantia, Georgia, serif",
+    'Corbel': "Corbel, 'Lucida Grande', sans-serif",
+    'Courier New': "'Courier New', Courier, monospace",
+    'Franklin Gothic Medium': "'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif",
+    'Garamond': "Garamond, Baskerville, 'Times New Roman', serif",
+    'Georgia': "Georgia, 'Times New Roman', serif",
+    'Impact': "Impact, Charcoal, sans-serif",
+    'Lucida Sans': "'Lucida Sans Unicode', 'Lucida Grande', sans-serif",
+    'Palatino Linotype': "'Palatino Linotype', 'Book Antiqua', Palatino, serif",
+    'Segoe UI': "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+    'Tahoma': "Tahoma, Geneva, Verdana, sans-serif",
+    'Times New Roman': "'Times New Roman', Times, serif",
+    'Trebuchet MS': "'Trebuchet MS', 'Lucida Grande', sans-serif",
+    'Verdana': "Verdana, Geneva, Tahoma, sans-serif"
+  },
+
+  // Devuelve la pila CSS de una fuente: si es una fuente de Word/sistema usa su
+  // stack nativo, si no la trata como fuente de Google.
+  buildFontStack(name, fallback) {
+    if (this.SYSTEM_FONTS[name]) return this.SYSTEM_FONTS[name];
+    return `'${name}', ${fallback}`;
+  },
+
+  // Carga desde Google Fonts la tipografia elegida en el panel de administracion
+  // (omitiendo las de Word/sistema) y la aplica a toda la tienda con variables CSS.
+  applyTypography() {
+    const heading = (this.settings.font_heading || 'Cormorant Garamond').trim();
+    const body = (this.settings.font_body || 'Plus Jakarta Sans').trim();
+
+    const root = document.documentElement;
+    root.style.setProperty('--font-heading', this.buildFontStack(heading, "Georgia, serif"));
+    root.style.setProperty('--font-body', this.buildFontStack(body, "'Plus Jakarta Sans', sans-serif"));
+
+    // Solo se piden a Google las fuentes que no estan instaladas en el sistema.
+    const families = [...new Set([heading, body])]
+      .filter(f => f && !this.SYSTEM_FONTS[f])
+      .map(f => `family=${encodeURIComponent(f).replace(/%20/g, '+')}:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400`);
+
+    const link = document.getElementById('dynamic-google-fonts');
+    if (link) {
+      if (families.length) {
+        link.href = `https://fonts.googleapis.com/css2?${families.join('&')}&display=swap`;
+      } else {
+        // Solo fuentes del sistema: se quita el atributo para no pedir nada.
+        link.removeAttribute('href');
+      }
+    }
+  },
+
+  // Sustituye los textos marcados con data-cms por los valores guardados
+  // en el panel de administracion (seccion "Textos de la Pagina").
+  applyCmsTexts() {
+    document.querySelectorAll('[data-cms]').forEach(el => {
+      const key = el.getAttribute('data-cms');
+      const value = this.settings[key];
+      if (typeof value === 'string' && value.trim() !== '') {
+        el.innerHTML = this.sanitizeCmsHtml(value);
+      }
+    });
+
+    const aboutImg = document.getElementById('about-image');
+    if (aboutImg && this.settings.about_image_url) {
+      aboutImg.src = this.settings.about_image_url;
+    }
+  },
+
+  // Permite formato basico (negrita, cursiva, saltos de linea) pero elimina
+  // scripts, iframes y manejadores de eventos por seguridad.
+  sanitizeCmsHtml(html) {
+    const allowed = ['STRONG', 'B', 'EM', 'I', 'U', 'BR', 'SPAN', 'SMALL'];
+    const tpl = document.createElement('template');
+    tpl.innerHTML = html;
+
+    const walk = (node) => {
+      [...node.childNodes].forEach(child => {
+        if (child.nodeType === Node.ELEMENT_NODE) {
+          if (!allowed.includes(child.tagName)) {
+            child.replaceWith(...child.childNodes);
+            return;
+          }
+          [...child.attributes].forEach(attr => {
+            if (attr.name !== 'class') child.removeAttribute(attr.name);
+          });
+          walk(child);
+        }
+      });
+    };
+    walk(tpl.content);
+    return tpl.innerHTML;
   },
 
   handleRouteFromUrl() {
