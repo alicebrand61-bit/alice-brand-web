@@ -98,7 +98,7 @@ const Admin = {
 
   switchTab(tab) {
     this.currentTab = tab;
-    const tabs = ['stats', 'products', 'orders', 'brand', 'typography', 'content', 'gateway'];
+    const tabs = ['stats', 'products', 'orders', 'brand', 'typography', 'content', 'sections', 'gateway'];
 
     tabs.forEach(t => {
       const section = document.getElementById(`admin-tab-${t}`);
@@ -117,6 +117,7 @@ const Admin = {
     if (tab === 'brand') this.loadSettings();
     if (tab === 'typography') this.loadTypographyTab();
     if (tab === 'content') this.loadContentTab();
+    if (tab === 'sections') this.loadSectionsTab();
 
     if (window.lucide) lucide.createIcons();
   },
@@ -422,6 +423,188 @@ const Admin = {
       Object.assign(this.settings, payload);
       await App.fetchSettings();
       App.showToast(successMsg, 'success');
+    } catch (err) {
+      App.showToast(err.message, 'error');
+    }
+  },
+
+  // ------------------------------------------------------------------
+  // SECCIONES DE LA PORTADA (crear / activar / reordenar / eliminar)
+  // ------------------------------------------------------------------
+
+  sections: [],
+
+  async loadSectionsTab() {
+    try {
+      const res = await fetch('/api/admin/sections', { headers: Auth.getAuthHeaders() });
+      if (!res.ok) throw new Error('No se pudieron cargar las secciones.');
+      this.sections = await res.json();
+      this.renderSectionsList();
+    } catch (e) {
+      App.showToast(e.message, 'error');
+    }
+  },
+
+  renderSectionsList() {
+    const list = document.getElementById('admin-sections-list');
+    if (!list) return;
+
+    if (this.sections.length === 0) {
+      list.innerHTML = '<p class="text-xs text-gray-500 p-4">No hay secciones registradas.</p>';
+      return;
+    }
+
+    list.innerHTML = this.sections.map((sec, i) => {
+      const activa = sec.enabled;
+      const fija = !sec.is_custom;
+      return `
+        <div class="flex items-center gap-3 p-3 rounded-2xl border ${activa ? 'border-[#e4dccb] bg-white' : 'border-gray-200 bg-gray-50 opacity-70'}">
+          <div class="flex flex-col gap-0.5">
+            <button type="button" onclick="Admin.moveSection(${i}, -1)" ${i === 0 ? 'disabled' : ''}
+              class="w-6 h-5 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-30 flex items-center justify-center" title="Subir">
+              <i data-lucide="chevron-up" class="w-3 h-3"></i>
+            </button>
+            <button type="button" onclick="Admin.moveSection(${i}, 1)" ${i === this.sections.length - 1 ? 'disabled' : ''}
+              class="w-6 h-5 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-30 flex items-center justify-center" title="Bajar">
+              <i data-lucide="chevron-down" class="w-3 h-3"></i>
+            </button>
+          </div>
+
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="font-bold text-sm text-dark truncate">${this.escapeHtml(sec.title)}</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded font-bold ${fija ? 'bg-[#A5BCD6]/50 text-dark' : 'bg-[#F5EFC6] text-[#4D0E12]'}">
+                ${fija ? 'FIJA' : 'PERSONALIZADA'}
+              </span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded font-bold ${activa ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}">
+                ${activa ? 'VISIBLE' : 'OCULTA'}
+              </span>
+            </div>
+            ${sec.subtitle ? `<p class="text-[11px] text-gray-500 truncate">${this.escapeHtml(sec.subtitle)}</p>` : ''}
+          </div>
+
+          <label class="flex items-center gap-2 cursor-pointer flex-shrink-0" title="Mostrar u ocultar en la portada">
+            <input type="checkbox" ${activa ? 'checked' : ''} onchange="Admin.toggleSection(${sec.id}, this.checked)"
+              class="w-4 h-4 accent-[#4D0E12] cursor-pointer" />
+            <span class="text-[11px] font-semibold text-coffee">Activa</span>
+          </label>
+
+          <button type="button" onclick="Admin.deleteSection(${sec.id})"
+            class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${fija ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : 'bg-red-50 text-red-600 hover:bg-red-100'}"
+            ${fija ? 'disabled title="Las secciones fijas solo se pueden ocultar"' : 'title="Eliminar seccion"'}>
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+        </div>`;
+    }).join('');
+
+    if (window.lucide) lucide.createIcons();
+  },
+
+  escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text || '';
+    return div.innerHTML;
+  },
+
+  async toggleSection(sectionId, enabled) {
+    try {
+      const res = await fetch(`/api/admin/sections/${sectionId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...Auth.getAuthHeaders() },
+        body: JSON.stringify({ enabled })
+      });
+      if (!res.ok) throw new Error('No se pudo actualizar la seccion.');
+
+      const updated = await res.json();
+      const idx = this.sections.findIndex(s => s.id === sectionId);
+      if (idx !== -1) this.sections[idx] = updated;
+
+      this.renderSectionsList();
+      await App.fetchSections();
+      App.showToast(enabled ? 'Seccion activada en la portada.' : 'Seccion ocultada de la portada.', 'success');
+    } catch (e) {
+      App.showToast(e.message, 'error');
+      this.loadSectionsTab();
+    }
+  },
+
+  async moveSection(index, delta) {
+    const target = index + delta;
+    if (target < 0 || target >= this.sections.length) return;
+
+    const reordered = [...this.sections];
+    [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
+    this.sections = reordered;
+    this.renderSectionsList();
+
+    try {
+      const res = await fetch('/api/admin/sections/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...Auth.getAuthHeaders() },
+        body: JSON.stringify({ ordered_ids: reordered.map(s => s.id) })
+      });
+      if (!res.ok) throw new Error('No se pudo guardar el nuevo orden.');
+
+      await this.loadSectionsTab();
+      await App.fetchSections();
+    } catch (e) {
+      App.showToast(e.message, 'error');
+      this.loadSectionsTab();
+    }
+  },
+
+  async deleteSection(sectionId) {
+    const sec = this.sections.find(s => s.id === sectionId);
+    if (!sec) return;
+    if (!confirm(`Eliminar definitivamente la seccion "${sec.title}"? Esta accion no se puede deshacer.`)) return;
+
+    try {
+      const res = await fetch(`/api/admin/sections/${sectionId}`, {
+        method: 'DELETE',
+        headers: Auth.getAuthHeaders()
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'No se pudo eliminar la seccion.');
+
+      await this.loadSectionsTab();
+      await App.fetchSections();
+      App.showToast(data.message, 'success');
+    } catch (e) {
+      App.showToast(e.message, 'error');
+    }
+  },
+
+  async handleCreateSection(e) {
+    e.preventDefault();
+    const payload = {
+      title: document.getElementById('new-section-title').value.trim(),
+      subtitle: document.getElementById('new-section-subtitle').value.trim(),
+      body: document.getElementById('new-section-body').value.trim(),
+      image_url: document.getElementById('new-section-image').value.trim(),
+      cta_text: document.getElementById('new-section-cta-text').value.trim(),
+      cta_link: document.getElementById('new-section-cta-link').value.trim(),
+      enabled: true
+    };
+
+    if (!payload.title) {
+      App.showToast('La seccion necesita un titulo.', 'error');
+      return;
+    }
+
+    try {
+      App.showToast('Creando la nueva seccion...', 'info');
+      const res = await fetch('/api/admin/sections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...Auth.getAuthHeaders() },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'No se pudo crear la seccion.');
+
+      e.target.reset();
+      await this.loadSectionsTab();
+      await App.fetchSections();
+      App.showToast(`Seccion "${data.title}" creada y publicada en la portada!`, 'success');
     } catch (err) {
       App.showToast(err.message, 'error');
     }

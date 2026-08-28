@@ -1,7 +1,7 @@
 import json
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query
-from app.models import ProductOut, CategoryOut
+from app.models import ProductOut, CategoryOut, SectionOut
 from app.database import query_db
 
 router = APIRouter(prefix="/api", tags=["Productos y Categorías"])
@@ -62,6 +62,22 @@ def get_public_settings():
             safe_settings[key] = value
 
     return safe_settings
+
+def format_section_row(row):
+    data = dict(row)
+    data["enabled"] = bool(data.get("enabled", 1))
+    data["is_custom"] = bool(data.get("is_custom", 0))
+    return data
+
+
+@router.get("/sections", response_model=List[SectionOut])
+def get_public_sections():
+    """Secciones visibles de la portada, en el orden definido en el panel."""
+    rows = query_db(
+        "SELECT * FROM sections WHERE enabled = 1 ORDER BY position ASC, id ASC"
+    )
+    return [format_section_row(r) for r in rows]
+
 
 @router.get("/categories", response_model=List[CategoryOut])
 def get_categories():

@@ -160,10 +160,10 @@
     <!-- ========================================== -->
     <!-- VIEW: HOME (Pauly Lingerie Style)          -->
     <!-- ========================================== -->
-    <div id="view-home" class="space-y-16">
+    <div id="view-home" class="flex flex-col gap-16">
       
       <!-- Hero Lookbook Banner -->
-      <section class="relative min-h-[580px] lg:min-h-[640px] flex items-center bg-[#FAF8F5] overflow-hidden">
+      <section data-section="hero" class="relative min-h-[580px] lg:min-h-[640px] flex items-center bg-[#FAF8F5] overflow-hidden">
         <div class="absolute inset-0 z-0">
           <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=2000&q=85" alt="Playa Colombia" class="w-full h-full object-cover object-center opacity-30" />
           <div class="absolute inset-0 bg-gradient-to-r from-[#FAF8F5] via-[#FAF8F5]/90 to-transparent"></div>
@@ -231,7 +231,7 @@
       </section>
 
       <!-- Category Showcase (Pauly Style 3-Grid) -->
-      <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section data-section="categories" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center max-w-2xl mx-auto mb-10">
           <span class="text-xs font-bold uppercase tracking-widest text-[#4D0E12]">Comprar por Categoría</span>
           <h2 class="text-3xl sm:text-4xl font-serif font-bold text-dark mt-1">Explora Nuestras Líneas Exclusivas</h2>
@@ -280,7 +280,7 @@
       </section>
 
       <!-- Featured Products Grid -->
-      <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section data-section="featured" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-end mb-8">
           <div>
             <span class="text-xs font-bold uppercase tracking-widest text-[#4D0E12]">Lo Más Deseado</span>
@@ -295,7 +295,7 @@
       </section>
 
       <!-- Direct WhatsApp Assistance Banner -->
-      <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section data-section="whatsapp" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="relative rounded-3xl overflow-hidden p-8 sm:p-12 lg:p-16 bg-[#4D0E12] text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-8">
           <div class="space-y-4 max-w-xl">
             <span class="bg-[#F5EFC6] text-[#4D0E12] text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
@@ -314,6 +314,9 @@
           </a>
         </div>
       </section>
+
+      <!-- Secciones personalizadas creadas desde el panel de administracion.
+           App.renderCustomSections() las inyecta aqui en el orden guardado. -->
 
     </div>
 
@@ -513,6 +516,11 @@
               <button id="admin-nav-content" onclick="Admin.switchTab('content')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-300 hover:bg-white/10 hover:text-white">
                 <i data-lucide="file-text" class="w-4 h-4"></i>
                 <span>Textos de la Página</span>
+              </button>
+
+              <button id="admin-nav-sections" onclick="Admin.switchTab('sections')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-300 hover:bg-white/10 hover:text-white">
+                <i data-lucide="layout-list" class="w-4 h-4"></i>
+                <span>Secciones de la Portada</span>
               </button>
 
               <button id="admin-nav-gateway" onclick="Admin.switchTab('gateway')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-300 hover:bg-white/10 hover:text-white">
@@ -904,7 +912,71 @@
           </div>
 
 
-          <!-- TAB 7: GATEWAY CONFIG (Wompi, Bold & PSE) -->
+          <!-- TAB 7: SECCIONES DE LA PORTADA -->
+          <div id="admin-tab-sections" class="hidden bg-white p-8 rounded-3xl border border-[#e4dccb] shadow-sm space-y-6">
+            <div class="flex items-center gap-3 border-b border-gray-100 pb-4">
+              <div class="w-12 h-12 rounded-2xl bg-[#4D0E12] text-white flex items-center justify-center">
+                <i data-lucide="layout-list" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <h3 class="font-serif font-bold text-2xl text-dark">Secciones de la Portada</h3>
+                <p class="text-xs text-gray-500">Activa, desactiva, reordena, crea o elimina las secciones de la p&aacute;gina de inicio.</p>
+              </div>
+            </div>
+
+            <!-- Listado de secciones -->
+            <div class="space-y-3">
+              <h4 class="font-bold text-sm text-[#4D0E12]">1. Secciones actuales</h4>
+              <p class="text-[11px] text-gray-400">
+                Las secciones fijas del sitio se pueden ocultar y reordenar, pero no eliminar.
+                Las que crees t&uacute; se pueden editar y eliminar por completo.
+              </p>
+              <div id="admin-sections-list" class="space-y-2"></div>
+            </div>
+
+            <!-- Crear seccion nueva -->
+            <div class="bg-[#FAF8F5] p-6 rounded-2xl border border-[#e4dccb] space-y-4">
+              <h4 class="font-bold text-sm text-[#4D0E12]">2. Crear una secci&oacute;n nueva</h4>
+              <form onsubmit="Admin.handleCreateSection(event)" class="space-y-3 text-xs">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block font-semibold text-coffee mb-1">T&iacute;tulo de la secci&oacute;n *</label>
+                    <input type="text" id="new-section-title" required placeholder="ej. Nuestro Compromiso Sostenible" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]" />
+                  </div>
+                  <div>
+                    <label class="block font-semibold text-coffee mb-1">Antet&iacute;tulo (opcional)</label>
+                    <input type="text" id="new-section-subtitle" placeholder="ej. Hecho en Colombia" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]" />
+                  </div>
+                </div>
+                <div>
+                  <label class="block font-semibold text-coffee mb-1">Texto de la secci&oacute;n</label>
+                  <textarea id="new-section-body" rows="4" placeholder="Escribe aqu&iacute; el contenido..." class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]"></textarea>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label class="block font-semibold text-coffee mb-1">URL de imagen (opcional)</label>
+                    <input type="text" id="new-section-image" placeholder="https://..." class="w-full p-2.5 border border-gray-300 rounded-xl font-mono text-[11px] focus:ring-1 focus:ring-[#4D0E12]" />
+                  </div>
+                  <div>
+                    <label class="block font-semibold text-coffee mb-1">Texto del bot&oacute;n</label>
+                    <input type="text" id="new-section-cta-text" placeholder="ej. Ver m&aacute;s" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]" />
+                  </div>
+                  <div>
+                    <label class="block font-semibold text-coffee mb-1">Enlace del bot&oacute;n</label>
+                    <input type="text" id="new-section-cta-link" placeholder="/catalogo o https://..." class="w-full p-2.5 border border-gray-300 rounded-xl font-mono text-[11px] focus:ring-1 focus:ring-[#4D0E12]" />
+                  </div>
+                </div>
+                <div class="flex justify-end pt-2">
+                  <button type="submit" class="btn-primary px-8 py-3 rounded-xl font-bold uppercase tracking-wider shadow-lg">
+                    Crear Secci&oacute;n
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+
+          <!-- TAB 8: GATEWAY CONFIG (Wompi, Bold & PSE) -->
           <div id="admin-tab-gateway" class="hidden bg-white p-8 rounded-3xl border border-[#e4dccb] shadow-sm space-y-6">
             <div class="flex items-center gap-3">
               <div class="w-12 h-12 rounded-2xl bg-[#4D0E12] text-white flex items-center justify-center">

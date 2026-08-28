@@ -6,10 +6,13 @@ from pathlib import Path
 from pydantic import BaseModel
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, status
 
-from app.models import ProductCreate, ProductUpdate, ProductOut, OrderOut, OrderStatusUpdate
+from app.models import (
+    ProductCreate, ProductUpdate, ProductOut, OrderOut, OrderStatusUpdate,
+    SectionCreate, SectionUpdate, SectionOut, SectionReorder
+)
 from app.database import query_db, execute_db
 from app.auth import get_current_admin
-from app.routers.product_routes import format_product_row
+from app.routers.product_routes import format_product_row, format_section_row
 
 router = APIRouter(prefix="/api/admin", tags=["Panel de Administración"])
 
@@ -252,6 +255,111 @@ async def upload_image(file: UploadFile = File(...), admin: dict = Depends(get_c
         "filename": filename,
         "url": f"/uploads/{filename}"
     }
+
+# ----------------------------------------------------------------------
+# SECCIONES DE LA PORTADA (crear / ocultar / reordenar / eliminar)
+# ----------------------------------------------------------------------
+
+@router.get("/sections", response_model=List[SectionOut])
+def get_admin_sections(admin: dict = Depends(get_current_admin)):
+    """Todas las secciones, incluidas las ocultas, para gestionarlas."""
+    rows = query_db("SELECT * FROM sections ORDER BY position ASC, id ASC")
+    return [format_section_row(r) for r in rows]
+
+
+@router.post("/sections", response_model=SectionOut)
+def create_section(section_in: SectionCreate, admin: dict = Depends(get_current_admin)):
+    """Crea una seccion personalizada nueva al final de la portada."""
+    title = section_in.title.strip()
+    if not title:
+        raise HTTPException(status_code=400, detail="La seccion debe tener un titulo.")
+
+    # Clave unica legible a partir del titulo
+    base = title.lower().strip()
+    for a, b in (("á", "a"), ("é", "e"), ("í", "i"), ("ó", "o"), ("ú", "u"), ("ñ", "n"), (" ", "-")):
+        base = base.replace(a, b)
+    clean = "".join(c for c in base if c.isalnum() or c == "-").strip("-") or "seccion"
+    key = f"custom-{clean}"
+    if query_db("SELECT id FROM sections WHERE section_key = ?", (key,), one=True):
+        key = f"{key}-{uuid.uuid4().hex[:4]}"
+
+    pos_row = query_db("SELECT MAX(position) as m FROM sections", one=True)
+    next_pos = (pos_row["m"] or 0) + 1
+
+    section_id = execute_db(
+        """INSERT INTO sections
+           (section_key, title, subtitle, body, image_url, cta_text, cta_link,
+            position, enabled, is_custom)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)""",
+        (
+            key, title, section_in.subtitle or "", section_in.body or "",
+            section_in.image_url or "", section_in.cta_text or "",
+            section_in.cta_link or "", next_pos, 1 if section_in.enabled else 0
+        )
+    )
+
+    row = query_db("SELECT * FROM sections WHERE id = ?", (section_id,), one=True)
+    return format_section_row(row)
+
+
+@router.put("/sections/{section_id}", response_model=SectionOut)
+def update_section(
+    section_id: int,
+    section_in: SectionUpdate,
+    admin: dict = Depends(get_current_admin)
+):
+    """Actualiza una seccion. Las secciones fijas solo aceptan enabled/position."""
+    existing = query_db("SELECT * FROM sections WHERE id = ?", (section_id,), one=True)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Seccion no encontrada.")
+
+    is_custom = bool(existing["is_custom"])
+    editable = ["enabled", "position"]
+    if is_custom:
+        editable += ["title", "subtitle", "body", "image_url", "cta_text", "cta_link"]
+
+    updates, params = [], []
+    for field in editable:
+        value = getattr(section_in, field, None)
+        if value is None:
+            continue
+        if field == "enabled":
+            value = 1 if value else 0
+        updates.append(f"{field} = ?")
+        params.append(value)
+
+    if updates:
+        params.append(section_id)
+        execute_db(f"UPDATE sections SET {', '.join(updates)} WHERE id = ?", params)
+
+    row = query_db("SELECT * FROM sections WHERE id = ?", (section_id,), one=True)
+    return format_section_row(row)
+
+
+@router.post("/sections/reorder")
+def reorder_sections(payload: SectionReorder, admin: dict = Depends(get_current_admin)):
+    """Guarda el nuevo orden de las secciones de la portada."""
+    for index, section_id in enumerate(payload.ordered_ids, start=1):
+        execute_db("UPDATE sections SET position = ? WHERE id = ?", (index, section_id))
+    return {"success": True, "message": "Orden de las secciones actualizado."}
+
+
+@router.delete("/sections/{section_id}")
+def delete_section(section_id: int, admin: dict = Depends(get_current_admin)):
+    """Elimina una seccion personalizada. Las fijas solo se pueden ocultar."""
+    existing = query_db("SELECT * FROM sections WHERE id = ?", (section_id,), one=True)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Seccion no encontrada.")
+
+    if not existing["is_custom"]:
+        raise HTTPException(
+            status_code=400,
+            detail="Las secciones fijas del sitio no se pueden eliminar, solo desactivar."
+        )
+
+    execute_db("DELETE FROM sections WHERE id = ?", (section_id,))
+    return {"success": True, "message": f"Seccion '{existing['title']}' eliminada."}
+
 
 @router.get("/settings")
 def get_admin_settings(admin: dict = Depends(get_current_admin)):

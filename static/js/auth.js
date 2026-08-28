@@ -283,11 +283,17 @@ const Auth = {
     const userBadge = document.getElementById('user-profile-badge');
 
     if (this.user) {
-      const firstName = this.user.full_name ? this.user.full_name.split(' ')[0] : 'Cuenta';
-      if (userText) userText.textContent = firstName;
+      // Se muestra el nombre real del cliente en vez de la palabra "Cliente".
+      const fullName = (this.user.full_name || '').trim();
+      if (userText) {
+        userText.textContent = fullName || 'Mi cuenta';
+        userText.title = fullName;
+      }
       if (userBadge) {
-        userBadge.textContent = this.user.role === 'admin' ? '👑 Admin' : '👤 Cliente';
-        userBadge.classList.remove('hidden');
+        // El distintivo solo marca al administrador; el cliente ya ve su nombre.
+        const esAdmin = this.user.role === 'admin';
+        userBadge.textContent = esAdmin ? '👑 Admin' : '';
+        userBadge.classList.toggle('hidden', !esAdmin);
       }
       if (adminLink) {
         adminLink.classList.toggle('hidden', this.user.role !== 'admin');

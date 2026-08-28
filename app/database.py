@@ -119,6 +119,41 @@ def init_db():
     );
     """)
 
+    # Sections table (secciones de la pagina de inicio, gestionables desde el admin)
+    # - is_custom = 0 -> seccion fija del sitio: se puede ocultar y reordenar, no borrar.
+    # - is_custom = 1 -> seccion creada desde el panel: se puede editar y borrar.
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS sections (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        section_key TEXT UNIQUE NOT NULL,
+        title TEXT NOT NULL,
+        subtitle TEXT,
+        body TEXT,
+        image_url TEXT,
+        cta_text TEXT,
+        cta_link TEXT,
+        position INTEGER DEFAULT 0,
+        enabled INTEGER DEFAULT 1,
+        is_custom INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+
+    # Secciones fijas que ya existen en el HTML de la portada
+    builtin_sections = [
+        ("hero", "Portada Principal (Hero)", "Banner de bienvenida con el titulo y el boton principal", 1),
+        ("categories", "Comprar por Categoria", "Cuadricula con las lineas de producto", 2),
+        ("featured", "Productos Destacados", "Los productos marcados como destacados", 3),
+        ("whatsapp", "Banner de Asesoria por WhatsApp", "Invitacion a escribir por WhatsApp", 4),
+    ]
+    for key, title, subtitle, pos in builtin_sections:
+        cursor.execute(
+            """INSERT OR IGNORE INTO sections
+               (section_key, title, subtitle, position, enabled, is_custom)
+               VALUES (?, ?, ?, ?, 1, 0)""",
+            (key, title, subtitle, pos)
+        )
+
     # Store Settings table (Logo, Brand, Payment Keys, Google Client ID)
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS settings (

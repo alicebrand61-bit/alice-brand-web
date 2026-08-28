@@ -97,6 +97,42 @@ class ProductOut(BaseModel):
     is_new: bool
     created_at: Optional[str] = None
 
+# --- Section Models (secciones editables de la portada) ---
+class SectionCreate(BaseModel):
+    title: str
+    subtitle: Optional[str] = ""
+    body: Optional[str] = ""
+    image_url: Optional[str] = ""
+    cta_text: Optional[str] = ""
+    cta_link: Optional[str] = ""
+    enabled: bool = True
+
+class SectionUpdate(BaseModel):
+    title: Optional[str] = None
+    subtitle: Optional[str] = None
+    body: Optional[str] = None
+    image_url: Optional[str] = None
+    cta_text: Optional[str] = None
+    cta_link: Optional[str] = None
+    enabled: Optional[bool] = None
+    position: Optional[int] = None
+
+class SectionOut(BaseModel):
+    id: int
+    section_key: str
+    title: str
+    subtitle: Optional[str] = None
+    body: Optional[str] = None
+    image_url: Optional[str] = None
+    cta_text: Optional[str] = None
+    cta_link: Optional[str] = None
+    position: int
+    enabled: bool
+    is_custom: bool
+
+class SectionReorder(BaseModel):
+    ordered_ids: List[int]
+
 # --- Order & Checkout Models ---
 class OrderItemCreate(BaseModel):
     product_id: int

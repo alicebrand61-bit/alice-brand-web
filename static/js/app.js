@@ -10,9 +10,11 @@ const App = {
   selectedModalSize: 'M',
   selectedModalColor: null,
   settings: {},
+  sections: [],
 
   async init() {
     await this.fetchSettings();
+    await this.fetchSections();
     Auth.init();
     Cart.init();
     await Checkout.init();
@@ -160,6 +162,94 @@ const App = {
     };
     walk(tpl.content);
     return tpl.innerHTML;
+  },
+
+  // ------------------------------------------------------------------
+  // SECCIONES DE LA PORTADA (se crean/ocultan/ordenan desde el panel)
+  // ------------------------------------------------------------------
+
+  async fetchSections() {
+    try {
+      const res = await fetch('/api/sections');
+      if (!res.ok) return;
+      this.sections = await res.json();
+      this.applySections();
+    } catch (e) {
+      console.error('Error cargando las secciones', e);
+    }
+  },
+
+  applySections() {
+    const home = document.getElementById('view-home');
+    if (!home) return;
+
+    const visibles = new Map(this.sections.map(sec => [sec.section_key, sec]));
+
+    // Secciones fijas: se muestran u ocultan y se colocan en su posicion.
+    home.querySelectorAll('[data-section]').forEach(el => {
+      const sec = visibles.get(el.dataset.section);
+      el.classList.toggle('hidden', !sec);
+      if (sec) el.style.order = sec.position;
+    });
+
+    this.renderCustomSections();
+
+    if (window.lucide) lucide.createIcons();
+  },
+
+  // Inserta en la portada las secciones creadas desde el panel.
+  renderCustomSections() {
+    const home = document.getElementById('view-home');
+    if (!home) return;
+
+    home.querySelectorAll('[data-custom-section]').forEach(el => el.remove());
+
+    this.sections.filter(sec => sec.is_custom).forEach(sec => {
+      const el = document.createElement('section');
+      el.setAttribute('data-custom-section', sec.section_key);
+      el.className = 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full';
+      el.style.order = sec.position;
+      el.innerHTML = this.buildCustomSectionHtml(sec);
+      home.appendChild(el);
+    });
+  },
+
+  buildCustomSectionHtml(sec) {
+    const esc = (v) => this.sanitizeCmsHtml(v || '');
+    const hasImage = !!(sec.image_url && sec.image_url.trim());
+
+    const cta = (sec.cta_text && sec.cta_text.trim())
+      ? `<div class="pt-2">
+           <a href="${this.safeUrl(sec.cta_link)}" class="btn-primary inline-flex px-7 py-3 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg">
+             ${esc(sec.cta_text)}
+           </a>
+         </div>`
+      : '';
+
+    const texto = `
+      <div class="space-y-4 ${hasImage ? '' : 'max-w-3xl mx-auto text-center'}">
+        ${sec.subtitle ? `<span class="text-xs font-bold uppercase tracking-widest text-[#4D0E12]">${esc(sec.subtitle)}</span>` : ''}
+        <h2 class="text-3xl sm:text-4xl font-serif font-bold text-dark">${esc(sec.title)}</h2>
+        ${sec.body ? `<p class="text-sm text-coffee/85 leading-relaxed font-light whitespace-pre-line">${esc(sec.body)}</p>` : ''}
+        ${cta}
+      </div>`;
+
+    if (!hasImage) return texto;
+
+    return `
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
+        <img src="${this.safeUrl(sec.image_url)}" alt="${(sec.title || '').replace(/"/g, '&quot;')}"
+             class="rounded-3xl shadow-xl border-4 border-white w-full object-cover" />
+        ${texto}
+      </div>`;
+  },
+
+  // Solo se aceptan enlaces http(s), rutas internas o anclas.
+  safeUrl(url) {
+    const value = (url || '').trim();
+    if (!value) return 'javascript:void(0)';
+    if (/^(https?:\/\/|\/|#)/i.test(value)) return value.replace(/"/g, '&quot;');
+    return 'javascript:void(0)';
   },
 
   handleRouteFromUrl() {
