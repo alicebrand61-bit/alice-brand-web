@@ -11,12 +11,16 @@ const App = {
   selectedModalColor: null,
   settings: {},
   sections: [],
+  heroSlides: [],
+  heroIndex: 0,
+  heroTimer: null,
   // Marcador propio para productos sin foto (antes se colaba una imagen de archivo).
   PLACEHOLDER_IMG: '/static/images/placeholder-producto.svg',
 
   async init() {
     await this.fetchSettings();
     await this.fetchSections();
+    await this.fetchHeroSlides();
     Auth.init();
     Cart.init();
     await Checkout.init();
@@ -258,6 +262,178 @@ const App = {
     if (!value) return 'javascript:void(0)';
     if (/^(https?:\/\/|\/|#)/i.test(value)) return value.replace(/"/g, '&quot;');
     return 'javascript:void(0)';
+  },
+
+  // ------------------------------------------------------------------
+  // CARRUSEL DE LA PORTADA
+  // Las diapositivas se administran desde el panel. El enlace de cada una
+  // se guarda como referencia (slug de categoria o clave de seccion), no
+  // como URL fija, para que siga funcionando si esa seccion cambia.
+  // ------------------------------------------------------------------
+
+  async fetchHeroSlides() {
+    try {
+      const res = await fetch('/api/hero-slides');
+      if (!res.ok) return;
+      this.heroSlides = await res.json();
+      this.renderHeroCarousel();
+    } catch (e) {
+      console.error('Error cargando el carrusel', e);
+    }
+  },
+
+  renderHeroCarousel() {
+    const track = document.getElementById('hero-carousel-track');
+    const dots = document.getElementById('hero-dots');
+    const prev = document.getElementById('hero-prev');
+    const next = document.getElementById('hero-next');
+    if (!track) return;
+
+    this.stopHeroAutoplay();
+    this.heroIndex = 0;
+
+    const slides = this.heroSlides;
+
+    // Sin diapositivas: se muestra un aviso discreto en vez de un hueco.
+    if (!slides.length) {
+      track.innerHTML = `
+        <div class="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center px-6">
+          <img src="${this.PLACEHOLDER_IMG}" alt="" class="w-24 opacity-60" />
+          <p class="text-sm text-coffee/70 font-light max-w-sm">
+            Aún no hay fotos en la portada. Agrégalas desde el panel, en
+            <strong class="font-semibold">Portada (Carrusel)</strong>.
+          </p>
+        </div>`;
+      if (dots) dots.innerHTML = '';
+      if (prev) prev.classList.add('hidden');
+      if (next) next.classList.add('hidden');
+      return;
+    }
+
+    track.innerHTML = slides.map((sl, i) => {
+      const img = (sl.image_url || '').trim();
+      const tieneTexto = (sl.title || '').trim() || (sl.subtitle || '').trim() || (sl.cta_text || '').trim();
+      const clickable = sl.link_type && sl.link_type !== 'none';
+
+      const overlay = tieneTexto ? `
+        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/15 to-transparent"></div>
+        <div class="absolute bottom-14 inset-x-0 px-6 sm:px-12 text-white max-w-3xl mx-auto text-center space-y-3">
+          ${(sl.subtitle || '').trim() ? `<span class="text-[11px] uppercase tracking-widest text-[#F5EFC6] font-semibold">${this.sanitizeCmsHtml(sl.subtitle)}</span>` : ''}
+          ${(sl.title || '').trim() ? `<h2 class="text-3xl sm:text-5xl font-serif font-bold leading-tight">${this.sanitizeCmsHtml(sl.title)}</h2>` : ''}
+          ${(sl.cta_text || '').trim() ? `<span class="inline-flex btn-primary px-7 py-3 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg">${this.sanitizeCmsHtml(sl.cta_text)}</span>` : ''}
+        </div>` : '';
+
+      return `
+        <div class="hero-slide absolute inset-0 transition-opacity duration-700 ${i === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'}"
+             data-slide="${i}" ${clickable ? `role="link" tabindex="0" onclick="App.openHeroSlide(${sl.id})" onkeydown="if(event.key==='Enter')App.openHeroSlide(${sl.id})"` : ''}
+             style="${clickable ? 'cursor:pointer' : ''}">
+          <img src="${img ? this.safeUrl(img) : this.PLACEHOLDER_IMG}"
+               onerror="this.src='${this.PLACEHOLDER_IMG}'"
+               alt="${(sl.title || 'Alice Brand').replace(/"/g, '&quot;')}"
+               class="w-full h-full ${img ? 'object-cover' : 'object-contain p-16 opacity-60'} object-center" />
+          ${overlay}
+        </div>`;
+    }).join('');
+
+    // Flechas y puntos solo tienen sentido con mas de una foto
+    const varias = slides.length > 1;
+    if (prev) prev.classList.toggle('hidden', !varias);
+    if (next) next.classList.toggle('hidden', !varias);
+    if (prev) prev.classList.toggle('flex', varias);
+    if (next) next.classList.toggle('flex', varias);
+
+    if (dots) {
+      dots.innerHTML = varias ? slides.map((_, i) => `
+        <button type="button" onclick="App.goToHeroSlide(${i})" aria-label="Ir a la foto ${i + 1}"
+          class="hero-dot h-2 rounded-full transition-all ${i === 0 ? 'w-7 bg-[#4D0E12]' : 'w-2 bg-white/70 hover:bg-white'}"></button>`).join('') : '';
+    }
+
+    if (window.lucide) lucide.createIcons();
+    this.startHeroAutoplay();
+  },
+
+  goToHeroSlide(index) {
+    const slides = document.querySelectorAll('.hero-slide');
+    if (!slides.length) return;
+
+    this.heroIndex = (index + slides.length) % slides.length;
+
+    slides.forEach((el, i) => {
+      const activa = i === this.heroIndex;
+      el.classList.toggle('opacity-100', activa);
+      el.classList.toggle('z-10', activa);
+      el.classList.toggle('opacity-0', !activa);
+      el.classList.toggle('z-0', !activa);
+      el.classList.toggle('pointer-events-none', !activa);
+    });
+
+    document.querySelectorAll('.hero-dot').forEach((d, i) => {
+      const activa = i === this.heroIndex;
+      d.classList.toggle('w-7', activa);
+      d.classList.toggle('bg-[#4D0E12]', activa);
+      d.classList.toggle('w-2', !activa);
+      d.classList.toggle('bg-white/70', !activa);
+    });
+  },
+
+  nextHeroSlide() { this.goToHeroSlide(this.heroIndex + 1); },
+  prevHeroSlide() { this.goToHeroSlide(this.heroIndex - 1); },
+
+  startHeroAutoplay() {
+    this.stopHeroAutoplay();
+    if (this.heroSlides.length < 2) return;
+    // Se respeta a quien pidio menos animacion en su sistema.
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    this.heroTimer = setInterval(() => this.nextHeroSlide(), 5500);
+  },
+
+  stopHeroAutoplay() {
+    if (this.heroTimer) {
+      clearInterval(this.heroTimer);
+      this.heroTimer = null;
+    }
+  },
+
+  // Resuelve el destino de una diapositiva en el momento del clic, para que
+  // apunte a la seccion o categoria tal como existe ahora.
+  openHeroSlide(slideId) {
+    const sl = this.heroSlides.find(x => x.id === slideId);
+    if (!sl) return;
+
+    const valor = (sl.link_value || '').trim();
+
+    switch (sl.link_type) {
+      case 'catalog':
+        this.navigate('catalog');
+        break;
+
+      case 'category': {
+        // Si la categoria ya no existe, se abre el catalogo completo.
+        const existe = this.categories.some(c => c.slug === valor);
+        this.navigate('catalog', existe ? valor : null);
+        break;
+      }
+
+      case 'section': {
+        const destino = document.querySelector(
+          `[data-section="${valor}"], [data-custom-section="${valor}"]`
+        );
+        if (destino) {
+          this.navigate('home');
+          setTimeout(() => destino.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120);
+        } else {
+          this.navigate('home');
+        }
+        break;
+      }
+
+      case 'url': {
+        const url = this.safeUrl(valor);
+        if (url && url !== 'javascript:void(0)') window.open(url, '_blank', 'noopener');
+        break;
+      }
+    }
   },
 
   handleRouteFromUrl() {
@@ -635,7 +811,40 @@ const App = {
     }, duration);
   },
 
+  setupHeroCarouselControls() {
+    const prev = document.getElementById('hero-prev');
+    const next = document.getElementById('hero-next');
+    const car = document.getElementById('hero-carousel');
+
+    if (prev) prev.addEventListener('click', () => { this.prevHeroSlide(); this.startHeroAutoplay(); });
+    if (next) next.addEventListener('click', () => { this.nextHeroSlide(); this.startHeroAutoplay(); });
+
+    if (car) {
+      car.addEventListener('mouseenter', () => this.stopHeroAutoplay());
+      car.addEventListener('mouseleave', () => this.startHeroAutoplay());
+
+      // Deslizar con el dedo en celular
+      let x0 = null;
+      car.addEventListener('touchstart', e => { x0 = e.changedTouches[0].clientX; }, { passive: true });
+      car.addEventListener('touchend', e => {
+        if (x0 === null) return;
+        const dx = e.changedTouches[0].clientX - x0;
+        if (Math.abs(dx) > 45) dx < 0 ? this.nextHeroSlide() : this.prevHeroSlide();
+        x0 = null;
+      }, { passive: true });
+    }
+
+    document.addEventListener('keydown', e => {
+      if (this.currentView !== 'home' || this.heroSlides.length < 2) return;
+      if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+      if (e.key === 'ArrowLeft') this.prevHeroSlide();
+      if (e.key === 'ArrowRight') this.nextHeroSlide();
+    });
+  },
+
   setupEventListeners() {
+    this.setupHeroCarouselControls();
+
     const searchInputs = document.querySelectorAll('.app-search-input');
     searchInputs.forEach(input => {
       input.addEventListener('input', (e) => {

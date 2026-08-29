@@ -9,7 +9,8 @@ from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, s
 from app.models import (
     ProductCreate, ProductUpdate, ProductOut, OrderOut, OrderStatusUpdate,
     SectionCreate, SectionUpdate, SectionOut, SectionReorder,
-    CategoryOut, CategoryUpdate
+    CategoryOut, CategoryUpdate, CategoryCreate,
+    HeroSlideCreate, HeroSlideUpdate, HeroSlideOut, HeroSlideReorder
 )
 from app.database import query_db, execute_db
 from app.auth import get_current_admin
@@ -309,6 +310,149 @@ def clear_category_images(admin: dict = Depends(get_current_admin)):
         "success": True,
         "cleared": total,
         "message": f"Se quitaron las imagenes de {total} categorias. Ya puedes subir las tuyas."
+    }
+
+
+# ----------------------------------------------------------------------
+# CARRUSEL DE LA PORTADA
+# ----------------------------------------------------------------------
+
+LINK_TYPES = {"none", "catalog", "category", "section", "url"}
+
+
+def format_slide_row(row):
+    data = dict(row)
+    data["enabled"] = bool(data.get("enabled", 1))
+    return data
+
+
+@router.get("/hero-slides", response_model=List[HeroSlideOut])
+def get_admin_hero_slides(admin: dict = Depends(get_current_admin)):
+    rows = query_db("SELECT * FROM hero_slides ORDER BY position ASC, id ASC")
+    return [format_slide_row(r) for r in rows]
+
+
+@router.post("/hero-slides", response_model=HeroSlideOut)
+def create_hero_slide(slide_in: HeroSlideCreate, admin: dict = Depends(get_current_admin)):
+    if slide_in.link_type not in LINK_TYPES:
+        raise HTTPException(status_code=400, detail="Tipo de enlace no valido.")
+
+    pos_row = query_db("SELECT MAX(position) as m FROM hero_slides", one=True)
+    next_pos = (pos_row["m"] or 0) + 1
+
+    slide_id = execute_db(
+        """INSERT INTO hero_slides
+           (image_url, title, subtitle, cta_text, link_type, link_value, position, enabled)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+        (
+            slide_in.image_url or "", slide_in.title or "", slide_in.subtitle or "",
+            slide_in.cta_text or "", slide_in.link_type, slide_in.link_value or "",
+            next_pos, 1 if slide_in.enabled else 0
+        )
+    )
+    return format_slide_row(query_db("SELECT * FROM hero_slides WHERE id = ?", (slide_id,), one=True))
+
+
+@router.put("/hero-slides/{slide_id}", response_model=HeroSlideOut)
+def update_hero_slide(
+    slide_id: int,
+    slide_in: HeroSlideUpdate,
+    admin: dict = Depends(get_current_admin)
+):
+    existing = query_db("SELECT * FROM hero_slides WHERE id = ?", (slide_id,), one=True)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Diapositiva no encontrada.")
+
+    if slide_in.link_type is not None and slide_in.link_type not in LINK_TYPES:
+        raise HTTPException(status_code=400, detail="Tipo de enlace no valido.")
+
+    updates, params = [], []
+    for field in ("image_url", "title", "subtitle", "cta_text",
+                  "link_type", "link_value", "enabled", "position"):
+        value = getattr(slide_in, field, None)
+        if value is None:
+            continue
+        if field == "enabled":
+            value = 1 if value else 0
+        updates.append(f"{field} = ?")
+        params.append(value)
+
+    if updates:
+        params.append(slide_id)
+        execute_db(f"UPDATE hero_slides SET {', '.join(updates)} WHERE id = ?", params)
+
+    return format_slide_row(query_db("SELECT * FROM hero_slides WHERE id = ?", (slide_id,), one=True))
+
+
+@router.post("/hero-slides/reorder")
+def reorder_hero_slides(payload: HeroSlideReorder, admin: dict = Depends(get_current_admin)):
+    for index, slide_id in enumerate(payload.ordered_ids, start=1):
+        execute_db("UPDATE hero_slides SET position = ? WHERE id = ?", (index, slide_id))
+    return {"success": True, "message": "Orden del carrusel actualizado."}
+
+
+@router.delete("/hero-slides/{slide_id}")
+def delete_hero_slide(slide_id: int, admin: dict = Depends(get_current_admin)):
+    existing = query_db("SELECT * FROM hero_slides WHERE id = ?", (slide_id,), one=True)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Diapositiva no encontrada.")
+
+    execute_db("DELETE FROM hero_slides WHERE id = ?", (slide_id,))
+    return {"success": True, "message": "Diapositiva eliminada del carrusel."}
+
+
+@router.post("/categories", response_model=CategoryOut)
+def create_category(category_in: CategoryCreate, admin: dict = Depends(get_current_admin)):
+    """Crea una categoria nueva; aparece de una vez en la portada y en los enlaces."""
+    name = category_in.name.strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="La categoria debe tener un nombre.")
+
+    base = name.lower()
+    for a, b in (("á", "a"), ("é", "e"), ("í", "i"), ("ó", "o"), ("ú", "u"), ("ñ", "n"), (" ", "-")):
+        base = base.replace(a, b)
+    slug = "".join(c for c in base if c.isalnum() or c == "-").strip("-") or "categoria"
+    if query_db("SELECT id FROM categories WHERE slug = ?", (slug,), one=True):
+        slug = f"{slug}-{uuid.uuid4().hex[:4]}"
+
+    category_id = execute_db(
+        "INSERT INTO categories (name, slug, description, image_url, tagline) VALUES (?, ?, ?, ?, ?)",
+        (name, slug, category_in.description or "", category_in.image_url or "", category_in.tagline or "")
+    )
+    return query_db(
+        "SELECT id, name, slug, description, image_url, tagline FROM categories WHERE id = ?",
+        (category_id,), one=True
+    )
+
+
+@router.delete("/categories/{category_id}")
+def delete_category(category_id: int, admin: dict = Depends(get_current_admin)):
+    """Elimina una categoria. Sus productos se conservan y quedan sin categoria."""
+    existing = query_db("SELECT * FROM categories WHERE id = ?", (category_id,), one=True)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Categoria no encontrada.")
+
+    count_row = query_db(
+        "SELECT COUNT(*) as c FROM products WHERE category_id = ?", (category_id,), one=True
+    )
+    afectados = count_row["c"] if count_row else 0
+
+    execute_db("DELETE FROM categories WHERE id = ?", (category_id,))
+
+    # Las diapositivas que apuntaban a esta categoria quedan sin enlace.
+    execute_db(
+        "UPDATE hero_slides SET link_type = 'none', link_value = '' "
+        "WHERE link_type = 'category' AND link_value = ?",
+        (existing["slug"],)
+    )
+
+    return {
+        "success": True,
+        "affected_products": afectados,
+        "message": (
+            f"Categoria '{existing['name']}' eliminada. "
+            f"{afectados} producto(s) quedaron sin categoria."
+        )
     }
 
 

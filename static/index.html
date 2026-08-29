@@ -162,71 +162,26 @@
     <!-- ========================================== -->
     <div id="view-home" class="flex flex-col gap-16">
       
-      <!-- Hero Lookbook Banner -->
-      <section data-section="hero" class="relative min-h-[580px] lg:min-h-[640px] flex items-center bg-[#FAF8F5] overflow-hidden">
-        <div class="absolute inset-0 z-0">
-          <img data-cms-image="hero_bg_image_url" src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=2000&q=85" alt="Playa Colombia" class="w-full h-full object-cover object-center opacity-30" />
-          <div class="absolute inset-0 bg-gradient-to-r from-[#FAF8F5] via-[#FAF8F5]/90 to-transparent"></div>
-        </div>
+      <!-- Hero: carrusel de fotos. App.renderHeroCarousel() lo llena desde
+           /api/hero-slides; las diapositivas se gestionan en el panel. -->
+      <section data-section="hero" class="relative bg-[#FAF8F5] overflow-hidden">
+        <!-- Encabezado de la pagina para lectores de pantalla y buscadores -->
+        <h1 class="sr-only" data-cms="hero_title">Alice Brand</h1>
 
-        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          <div class="lg:col-span-7 space-y-6">
-            <div class="inline-flex items-center gap-2 bg-[#A5BCD6]/40 text-[#4D0E12] px-4 py-1.5 rounded-full text-xs font-bold tracking-wider uppercase border border-[#A5BCD6]">
-              <span class="w-2 h-2 rounded-full bg-[#4D0E12] animate-ping"></span>
-              <span data-cms="hero_tag">Colección Costera 2026 · Hecho en Colombia 🇨🇴</span>
-            </div>
-            
-            <h1 data-cms="hero_title" class="text-4xl sm:text-5xl lg:text-6xl font-serif font-bold text-[#231815] leading-[1.15]">
-              Elegancia, Comodidad &amp; Siluetas para una Mujer Real
-            </h1>
+        <div id="hero-carousel" class="relative w-full">
+          <div id="hero-carousel-track" class="relative w-full h-[62vh] min-h-[380px] max-h-[680px] bg-[#ece3d2]"></div>
 
-            <p data-cms="hero_subtitle" class="text-base sm:text-lg text-coffee/85 max-w-xl font-light leading-relaxed">
-              Descubre trajes de baño de autor, kimonos en seda vaporosa y accesorios artesanales. Confección colombiana de lujo con protección UPF 50+ y detalles en baño de oro de 24k.
-            </p>
+          <button type="button" id="hero-prev" aria-label="Foto anterior"
+            class="hidden absolute left-4 sm:left-6 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-white/85 hover:bg-white text-[#4D0E12] shadow-lg backdrop-blur items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-[#4D0E12]">
+            <i data-lucide="chevron-left" class="w-5 h-5"></i>
+          </button>
 
-            <div class="flex flex-wrap items-center gap-4 pt-2">
-              <button onclick="App.navigate('catalog')" class="btn-primary px-8 py-4 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-xl">
-                <span data-cms="hero_cta_text">Comprar Colección</span>
-                <i data-lucide="arrow-right" class="w-4 h-4"></i>
-              </button>
-              <button onclick="App.navigate('catalog', 'vestidos-de-bano')" class="btn-sand px-7 py-4 rounded-full text-xs font-bold uppercase tracking-wider">
-                Ver Vestidos de Baño
-              </button>
-            </div>
+          <button type="button" id="hero-next" aria-label="Foto siguiente"
+            class="hidden absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-white/85 hover:bg-white text-[#4D0E12] shadow-lg backdrop-blur items-center justify-center transition-all focus:outline-none focus:ring-2 focus:ring-[#4D0E12]">
+            <i data-lucide="chevron-right" class="w-5 h-5"></i>
+          </button>
 
-            <!-- Value Props Badges -->
-            <div class="grid grid-cols-3 gap-4 pt-6 border-t border-[#ece4d0] text-xs text-coffee/80">
-              <div class="flex items-center gap-2">
-                <i data-lucide="shield-check" class="w-5 h-5 text-[#4D0E12] flex-shrink-0"></i>
-                <span>Protección UPF 50+</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <i data-lucide="sparkles" class="w-5 h-5 text-[#4D0E12] flex-shrink-0"></i>
-                <span>Confección Local 🇨🇴</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <i data-lucide="truck" class="w-5 h-5 text-[#4D0E12] flex-shrink-0"></i>
-                <span>Envíos Nacionales</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Hero Highlight Card -->
-          <div class="lg:col-span-5 relative">
-            <div class="relative mx-auto max-w-sm rounded-3xl overflow-hidden shadow-2xl border-4 border-white bg-white">
-              <img data-cms-image="hero_side_image_url" src="https://images.unsplash.com/photo-1576426863848-c21f53c60b19?auto=format&fit=crop&w=1000&q=85" alt="Bikini Alice Brand" class="w-full h-[460px] object-cover" />
-              <div class="absolute bottom-4 inset-x-4 p-4 rounded-2xl bg-white/95 backdrop-blur-md shadow-lg border border-white/40 flex justify-between items-center">
-                <div>
-                  <span class="text-[10px] font-bold text-[#4D0E12] uppercase tracking-wider">Favorito de Temporada</span>
-                  <h4 class="font-serif font-bold text-base text-dark">Bikini Caribe Esmeralda</h4>
-                  <p class="text-xs text-coffee font-bold">$185.000 COP</p>
-                </div>
-                <button onclick="App.openProductModal(1)" class="btn-primary p-2.5 rounded-full text-white shadow-md">
-                  <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
-                </button>
-              </div>
-            </div>
-          </div>
+          <div id="hero-dots" class="absolute bottom-5 inset-x-0 z-20 flex justify-center gap-2"></div>
         </div>
       </section>
 
@@ -479,6 +434,11 @@
               <button id="admin-nav-content" onclick="Admin.switchTab('content')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-300 hover:bg-white/10 hover:text-white">
                 <i data-lucide="file-text" class="w-4 h-4"></i>
                 <span>Textos de la Página</span>
+              </button>
+
+              <button id="admin-nav-hero" onclick="Admin.switchTab('hero')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-300 hover:bg-white/10 hover:text-white">
+                <i data-lucide="images" class="w-4 h-4"></i>
+                <span>Portada (Carrusel)</span>
               </button>
 
               <button id="admin-nav-categories" onclick="Admin.switchTab('categories')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-300 hover:bg-white/10 hover:text-white">
@@ -737,6 +697,91 @@
           </div>
 
 
+          <!-- TAB: CARRUSEL DE LA PORTADA -->
+          <div id="admin-tab-hero" class="hidden bg-white p-8 rounded-3xl border border-[#e4dccb] shadow-sm space-y-6">
+            <div class="flex items-center gap-3 border-b border-gray-100 pb-4">
+              <div class="w-12 h-12 rounded-2xl bg-[#4D0E12] text-white flex items-center justify-center">
+                <i data-lucide="images" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <h3 class="font-serif font-bold text-2xl text-dark">Carrusel de la Portada</h3>
+                <p class="text-xs text-gray-500">Las fotos grandes que rotan al entrar. Agrega, reordena, oculta o elimina cada una.</p>
+              </div>
+            </div>
+
+            <div class="space-y-3">
+              <h4 class="font-bold text-sm text-[#4D0E12]">1. Fotos del carrusel</h4>
+              <div id="admin-hero-list" class="space-y-3"></div>
+            </div>
+
+            <div class="bg-[#FAF8F5] p-6 rounded-2xl border border-[#e4dccb] space-y-4">
+              <h4 id="hero-form-heading" class="font-bold text-sm text-[#4D0E12]">2. Agregar una foto</h4>
+              <p id="hero-form-editing-hint" class="hidden text-[11px] text-[#4D0E12] bg-[#F5EFC6] px-3 py-2 rounded-lg font-semibold"></p>
+
+              <form id="hero-form" onsubmit="Admin.handleHeroFormSubmit(event)" class="space-y-3 text-xs">
+                <div class="flex items-start gap-4 flex-wrap">
+                  <img id="hero-form-preview" src="/static/images/placeholder-producto.svg"
+                       onerror="this.src='/static/images/placeholder-producto.svg'"
+                       class="w-28 h-20 object-cover rounded-xl border border-gray-200 bg-white flex-shrink-0" alt="" />
+                  <div class="flex-1 min-w-[240px] space-y-2">
+                    <label class="block font-semibold text-coffee">URL de la foto</label>
+                    <input type="text" id="hero-form-image" oninput="Admin.previewHeroImage()" placeholder="https://... o /uploads/..."
+                      class="w-full p-2.5 border border-gray-300 rounded-xl font-mono text-[11px] focus:ring-1 focus:ring-[#4D0E12]" />
+                    <label class="btn-sand px-3 py-1.5 rounded-lg text-[11px] font-bold cursor-pointer inline-flex items-center gap-1.5">
+                      <i data-lucide="upload" class="w-3.5 h-3.5"></i> Subir foto desde mi PC
+                      <input type="file" accept="image/*" class="hidden" onchange="Admin.handleHeroImageUpload(this)" />
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block font-semibold text-coffee mb-1">A d&oacute;nde lleva al hacer clic</label>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <select id="hero-form-link" onchange="Admin.onHeroLinkChange()"
+                      class="w-full p-2.5 border border-gray-300 rounded-xl bg-white focus:ring-1 focus:ring-[#4D0E12]"></select>
+                    <input type="text" id="hero-form-url" placeholder="https://ejemplo.com"
+                      class="hidden w-full p-2.5 border border-gray-300 rounded-xl font-mono text-[11px] focus:ring-1 focus:ring-[#4D0E12]" />
+                  </div>
+                  <p class="text-[11px] text-gray-400 mt-1">
+                    La lista se arma sola con tus categor&iacute;as y secciones actuales: si creas una nueva, aparece aqu&iacute;.
+                  </p>
+                </div>
+
+                <details class="rounded-xl border border-gray-200 bg-white">
+                  <summary class="cursor-pointer px-3 py-2 font-semibold text-coffee">Texto sobre la foto (opcional)</summary>
+                  <div class="p-3 pt-1 space-y-2">
+                    <p class="text-[11px] text-gray-400">D&eacute;jalo vac&iacute;o para una portada solo de fotos.</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div>
+                        <label class="block font-semibold text-coffee mb-1">Antet&iacute;tulo</label>
+                        <input type="text" id="hero-form-subtitle" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]" />
+                      </div>
+                      <div>
+                        <label class="block font-semibold text-coffee mb-1">T&iacute;tulo</label>
+                        <input type="text" id="hero-form-title" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]" />
+                      </div>
+                    </div>
+                    <div>
+                      <label class="block font-semibold text-coffee mb-1">Texto del bot&oacute;n</label>
+                      <input type="text" id="hero-form-cta" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]" />
+                    </div>
+                  </div>
+                </details>
+
+                <div class="flex justify-end gap-3 pt-2">
+                  <button type="button" id="hero-form-cancel" onclick="Admin.cancelHeroEdit()"
+                    class="hidden px-6 py-3 rounded-xl font-bold uppercase tracking-wider border border-gray-300 text-coffee hover:bg-gray-100 transition-colors">
+                    Cancelar
+                  </button>
+                  <button type="submit" id="hero-form-submit" class="btn-primary px-8 py-3 rounded-xl font-bold uppercase tracking-wider shadow-lg">
+                    Agregar al Carrusel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+
           <!-- TAB: CATEGORIAS (tarjetas de la portada) -->
           <div id="admin-tab-categories" class="hidden bg-white p-8 rounded-3xl border border-[#e4dccb] shadow-sm space-y-6">
             <div class="flex items-center justify-between gap-3 border-b border-gray-100 pb-4 flex-wrap">
@@ -758,6 +803,34 @@
             </div>
 
             <div id="admin-categories-list" class="space-y-4"></div>
+
+            <div class="bg-[#FAF8F5] p-6 rounded-2xl border border-[#e4dccb] space-y-3">
+              <h4 class="font-bold text-sm text-[#4D0E12]">Crear una categor&iacute;a nueva</h4>
+              <form onsubmit="Admin.handleCreateCategory(event)" class="space-y-3 text-xs">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label class="block font-semibold text-coffee mb-1">Nombre *</label>
+                    <input type="text" id="new-cat-name" required placeholder="ej. Ropa de Playa"
+                      class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]" />
+                  </div>
+                  <div>
+                    <label class="block font-semibold text-coffee mb-1">Antet&iacute;tulo</label>
+                    <input type="text" id="new-cat-tagline" placeholder="ej. Novedad"
+                      class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]" />
+                  </div>
+                  <div>
+                    <label class="block font-semibold text-coffee mb-1">Descripci&oacute;n</label>
+                    <input type="text" id="new-cat-desc" placeholder="Breve descripci&oacute;n"
+                      class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]" />
+                  </div>
+                </div>
+                <div class="flex justify-end">
+                  <button type="submit" class="btn-primary px-7 py-2.5 rounded-xl font-bold uppercase tracking-wider shadow">
+                    Crear Categor&iacute;a
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
 
 

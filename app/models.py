@@ -140,6 +140,47 @@ class SectionOut(BaseModel):
 class SectionReorder(BaseModel):
     ordered_ids: List[int]
 
+# --- Hero Slide Models (carrusel de la portada) ---
+class HeroSlideCreate(BaseModel):
+    image_url: Optional[str] = ""
+    title: Optional[str] = ""
+    subtitle: Optional[str] = ""
+    cta_text: Optional[str] = ""
+    link_type: str = "none"
+    link_value: Optional[str] = ""
+    enabled: bool = True
+
+class HeroSlideUpdate(BaseModel):
+    image_url: Optional[str] = None
+    title: Optional[str] = None
+    subtitle: Optional[str] = None
+    cta_text: Optional[str] = None
+    link_type: Optional[str] = None
+    link_value: Optional[str] = None
+    enabled: Optional[bool] = None
+    position: Optional[int] = None
+
+class HeroSlideOut(BaseModel):
+    id: int
+    image_url: Optional[str] = None
+    title: Optional[str] = None
+    subtitle: Optional[str] = None
+    cta_text: Optional[str] = None
+    link_type: str
+    link_value: Optional[str] = None
+    position: int
+    enabled: bool
+
+class HeroSlideReorder(BaseModel):
+    ordered_ids: List[int]
+
+# --- Category creation ---
+class CategoryCreate(BaseModel):
+    name: str
+    description: Optional[str] = ""
+    tagline: Optional[str] = ""
+    image_url: Optional[str] = ""
+
 # --- Order & Checkout Models ---
 class OrderItemCreate(BaseModel):
     product_id: int

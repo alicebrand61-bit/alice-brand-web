@@ -1,7 +1,7 @@
 import json
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query
-from app.models import ProductOut, CategoryOut, SectionOut
+from app.models import ProductOut, CategoryOut, SectionOut, HeroSlideOut
 from app.database import query_db
 
 router = APIRouter(prefix="/api", tags=["Productos y Categorías"])
@@ -77,6 +77,15 @@ def get_public_sections():
         "SELECT * FROM sections WHERE enabled = 1 ORDER BY position ASC, id ASC"
     )
     return [format_section_row(r) for r in rows]
+
+
+@router.get("/hero-slides", response_model=List[HeroSlideOut])
+def get_public_hero_slides():
+    """Diapositivas visibles del carrusel de la portada, en orden."""
+    rows = query_db(
+        "SELECT * FROM hero_slides WHERE enabled = 1 ORDER BY position ASC, id ASC"
+    )
+    return [dict(r, enabled=bool(r["enabled"])) for r in rows]
 
 
 @router.get("/categories", response_model=List[CategoryOut])

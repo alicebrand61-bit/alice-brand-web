@@ -98,7 +98,7 @@ const Admin = {
 
   switchTab(tab) {
     this.currentTab = tab;
-    const tabs = ['stats', 'products', 'orders', 'brand', 'categories', 'typography', 'content', 'sections', 'gateway'];
+    const tabs = ['stats', 'products', 'orders', 'brand', 'hero', 'categories', 'typography', 'content', 'sections', 'gateway'];
 
     tabs.forEach(t => {
       const section = document.getElementById(`admin-tab-${t}`);
@@ -117,9 +117,11 @@ const Admin = {
     if (tab === 'brand') this.loadSettings();
     if (tab === 'typography') this.loadTypographyTab();
     if (tab === 'content') this.loadContentTab();
+    if (tab === 'hero') this.loadHeroTab();
     if (tab === 'categories') this.loadCategoriesTab();
     if (tab === 'sections') this.loadSectionsTab();
     else if (this.editingSectionId !== null) this.cancelSectionEdit();
+    if (tab !== 'hero' && this.editingSlideId !== null) this.cancelHeroEdit();
 
     if (window.lucide) lucide.createIcons();
   },
@@ -978,6 +980,339 @@ const Admin = {
   },
 
   // ------------------------------------------------------------------
+  // CARRUSEL DE LA PORTADA
+  // ------------------------------------------------------------------
+
+  heroSlides: [],
+  editingSlideId: null,
+
+  async loadHeroTab() {
+    try {
+      // Las categorias y secciones alimentan el desplegable de destinos.
+      const [slidesRes, catsRes, secsRes] = await Promise.all([
+        fetch('/api/admin/hero-slides', { headers: Auth.getAuthHeaders() }),
+        fetch('/api/admin/categories', { headers: Auth.getAuthHeaders() }),
+        fetch('/api/admin/sections', { headers: Auth.getAuthHeaders() })
+      ]);
+      if (!slidesRes.ok) throw new Error('No se pudo cargar el carrusel.');
+
+      this.heroSlides = await slidesRes.json();
+      if (catsRes.ok) this.categories = await catsRes.json();
+      if (secsRes.ok) this.sections = await secsRes.json();
+
+      this.buildHeroLinkSelect();
+      this.renderHeroList();
+    } catch (e) {
+      App.showToast(e.message, 'error');
+    }
+  },
+
+  // El desplegable se arma con lo que existe hoy, asi que una categoria o
+  // seccion nueva aparece aqui sin tocar nada.
+  buildHeroLinkSelect(seleccion) {
+    const select = document.getElementById('hero-form-link');
+    if (!select) return;
+
+    const cats = this.categories.map(c =>
+      `<option value="category:${c.slug}">${this.escapeHtml(c.name)}</option>`).join('');
+    const secs = this.sections.map(sec =>
+      `<option value="section:${sec.section_key}">${this.escapeHtml(sec.title)}</option>`).join('');
+
+    select.innerHTML = `
+      <option value="none:">Sin enlace (solo foto)</option>
+      <option value="catalog:">Catalogo completo</option>
+      ${cats ? `<optgroup label="Ir a una categoria">${cats}</optgroup>` : ''}
+      ${secs ? `<optgroup label="Ir a una seccion de la portada">${secs}</optgroup>` : ''}
+      <option value="url:">Enlace externo...</option>`;
+
+    if (seleccion) select.value = seleccion;
+    this.onHeroLinkChange();
+  },
+
+  onHeroLinkChange() {
+    const select = document.getElementById('hero-form-link');
+    const urlField = document.getElementById('hero-form-url');
+    if (!select || !urlField) return;
+    urlField.classList.toggle('hidden', !select.value.startsWith('url:'));
+  },
+
+  renderHeroList() {
+    const list = document.getElementById('admin-hero-list');
+    if (!list) return;
+
+    if (!this.heroSlides.length) {
+      list.innerHTML = `
+        <p class="text-xs text-gray-500 p-4 rounded-xl border border-dashed border-gray-300 bg-gray-50">
+          El carrusel esta vacio. Agrega tu primera foto en el formulario de abajo.
+        </p>`;
+      return;
+    }
+
+    list.innerHTML = this.heroSlides.map((sl, i) => {
+      const img = (sl.image_url || '').trim();
+      return `
+        <div class="flex items-center gap-3 p-3 rounded-2xl border ${sl.enabled ? 'border-[#e4dccb] bg-white' : 'border-gray-200 bg-gray-50 opacity-70'}">
+          <div class="flex flex-col gap-0.5">
+            <button type="button" onclick="Admin.moveHeroSlide(${i}, -1)" ${i === 0 ? 'disabled' : ''}
+              class="w-6 h-5 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-30 flex items-center justify-center" title="Subir">
+              <i data-lucide="chevron-up" class="w-3 h-3"></i>
+            </button>
+            <button type="button" onclick="Admin.moveHeroSlide(${i}, 1)" ${i === this.heroSlides.length - 1 ? 'disabled' : ''}
+              class="w-6 h-5 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-30 flex items-center justify-center" title="Bajar">
+              <i data-lucide="chevron-down" class="w-3 h-3"></i>
+            </button>
+          </div>
+
+          <div class="relative flex-shrink-0">
+            <img src="${img || Admin.PLACEHOLDER_IMG}" onerror="this.src='${Admin.PLACEHOLDER_IMG}'"
+                 class="w-24 h-16 object-cover rounded-lg border border-gray-200 bg-white" alt="" />
+            ${img ? `<button type="button" onclick="Admin.removeHeroSlideImage(${sl.id})" title="Quitar solo la imagen"
+                      class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-600 text-white text-xs font-bold flex items-center justify-center shadow hover:bg-red-700">&times;</button>` : ''}
+          </div>
+
+          <div class="flex-1 min-w-0">
+            <div class="font-bold text-sm text-dark truncate">
+              ${sl.title ? this.escapeHtml(sl.title) : `<span class="text-gray-400 font-normal">Foto ${i + 1} (sin texto)</span>`}
+            </div>
+            <div class="text-[11px] text-gray-500 truncate">${this.describeHeroLink(sl)}</div>
+          </div>
+
+          <label class="flex items-center gap-2 cursor-pointer flex-shrink-0" title="Mostrar u ocultar en el carrusel">
+            <input type="checkbox" ${sl.enabled ? 'checked' : ''} onchange="Admin.toggleHeroSlide(${sl.id}, this.checked)"
+              class="w-4 h-4 accent-[#4D0E12] cursor-pointer" />
+            <span class="text-[11px] font-semibold text-coffee">Activa</span>
+          </label>
+
+          <button type="button" onclick="Admin.editHeroSlide(${sl.id})" title="Editar esta foto"
+            class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-[#A5BCD6]/30 text-[#4D0E12] hover:bg-[#A5BCD6]/60">
+            <i data-lucide="pencil" class="w-4 h-4"></i>
+          </button>
+
+          <button type="button" onclick="Admin.deleteHeroSlide(${sl.id})" title="Eliminar esta foto del carrusel"
+            class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-red-50 text-red-600 hover:bg-red-100">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+        </div>`;
+    }).join('');
+
+    if (window.lucide) lucide.createIcons();
+  },
+
+  describeHeroLink(sl) {
+    const v = (sl.link_value || '').trim();
+    switch (sl.link_type) {
+      case 'catalog': return 'Lleva al catalogo completo';
+      case 'category': {
+        const c = this.categories.find(x => x.slug === v);
+        return c ? `Lleva a la categoria: ${this.escapeHtml(c.name)}`
+                 : 'La categoria enlazada ya no existe (abrira el catalogo)';
+      }
+      case 'section': {
+        const sec = this.sections.find(x => x.section_key === v);
+        return sec ? `Lleva a la seccion: ${this.escapeHtml(sec.title)}`
+                   : 'La seccion enlazada ya no existe';
+      }
+      case 'url': return `Enlace externo: ${this.escapeHtml(v)}`;
+      default: return 'Sin enlace';
+    }
+  },
+
+  previewHeroImage() {
+    const url = document.getElementById('hero-form-image')?.value.trim();
+    const prev = document.getElementById('hero-form-preview');
+    if (prev) prev.src = url || Admin.PLACEHOLDER_IMG;
+  },
+
+  async handleHeroImageUpload(input) {
+    if (!input.files || input.files.length === 0) return;
+    const formData = new FormData();
+    formData.append('file', input.files[0]);
+
+    try {
+      App.showToast('Subiendo la foto...', 'info');
+      const res = await fetch('/api/admin/upload', {
+        method: 'POST', headers: Auth.getAuthHeaders(), body: formData
+      });
+      if (!res.ok) throw new Error('No se pudo subir la foto.');
+      const data = await res.json();
+
+      const field = document.getElementById('hero-form-image');
+      if (field) field.value = data.url;
+      this.previewHeroImage();
+      App.showToast('Foto lista. Ahora guardala en el carrusel.', 'success');
+    } catch (e) {
+      App.showToast(e.message, 'error');
+    }
+  },
+
+  readHeroForm() {
+    const sel = document.getElementById('hero-form-link').value;
+    const [tipo, ...resto] = sel.split(':');
+    let valor = resto.join(':');
+    if (tipo === 'url') valor = document.getElementById('hero-form-url').value.trim();
+
+    return {
+      image_url: document.getElementById('hero-form-image').value.trim(),
+      title: document.getElementById('hero-form-title').value.trim(),
+      subtitle: document.getElementById('hero-form-subtitle').value.trim(),
+      cta_text: document.getElementById('hero-form-cta').value.trim(),
+      link_type: tipo,
+      link_value: valor
+    };
+  },
+
+  editHeroSlide(slideId) {
+    const sl = this.heroSlides.find(x => x.id === slideId);
+    if (!sl) return;
+
+    this.editingSlideId = slideId;
+    document.getElementById('hero-form-image').value = sl.image_url || '';
+    document.getElementById('hero-form-title').value = sl.title || '';
+    document.getElementById('hero-form-subtitle').value = sl.subtitle || '';
+    document.getElementById('hero-form-cta').value = sl.cta_text || '';
+
+    this.buildHeroLinkSelect(`${sl.link_type}:${sl.link_type === 'url' ? '' : (sl.link_value || '')}`);
+    if (sl.link_type === 'url') {
+      document.getElementById('hero-form-link').value = 'url:';
+      document.getElementById('hero-form-url').value = sl.link_value || '';
+      this.onHeroLinkChange();
+    }
+    this.previewHeroImage();
+
+    document.getElementById('hero-form-heading').innerHTML = '2. Editar foto del carrusel';
+    document.getElementById('hero-form-submit').innerHTML = 'Guardar Cambios';
+    document.getElementById('hero-form-cancel').classList.remove('hidden');
+    const aviso = document.getElementById('hero-form-editing-hint');
+    aviso.textContent = 'Editando una foto del carrusel. Usa Cancelar para volver a agregar una nueva.';
+    aviso.classList.remove('hidden');
+
+    document.getElementById('hero-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  },
+
+  cancelHeroEdit() {
+    this.editingSlideId = null;
+    document.getElementById('hero-form')?.reset();
+    this.buildHeroLinkSelect();
+    this.previewHeroImage();
+
+    const h = document.getElementById('hero-form-heading');
+    const b = document.getElementById('hero-form-submit');
+    const c = document.getElementById('hero-form-cancel');
+    const a = document.getElementById('hero-form-editing-hint');
+    if (h) h.innerHTML = '2. Agregar una foto';
+    if (b) b.innerHTML = 'Agregar al Carrusel';
+    if (c) c.classList.add('hidden');
+    if (a) a.classList.add('hidden');
+  },
+
+  async handleHeroFormSubmit(e) {
+    e.preventDefault();
+    const payload = this.readHeroForm();
+
+    if (!payload.image_url) {
+      App.showToast('Elige o sube una foto para el carrusel.', 'error');
+      return;
+    }
+    if (payload.link_type === 'url' && !payload.link_value) {
+      App.showToast('Escribe la direccion del enlace externo.', 'error');
+      return;
+    }
+
+    const editando = this.editingSlideId !== null;
+    const url = editando ? `/api/admin/hero-slides/${this.editingSlideId}` : '/api/admin/hero-slides';
+    if (!editando) payload.enabled = true;
+
+    try {
+      App.showToast(editando ? 'Guardando los cambios...' : 'Agregando la foto al carrusel...', 'info');
+      const res = await fetch(url, {
+        method: editando ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json', ...Auth.getAuthHeaders() },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'No se pudo guardar.');
+
+      this.cancelHeroEdit();
+      await this.loadHeroTab();
+      await App.fetchHeroSlides();
+      App.showToast(editando ? 'Foto actualizada.' : 'Foto agregada al carrusel.', 'success');
+    } catch (err) {
+      App.showToast(err.message, 'error');
+    }
+  },
+
+  async toggleHeroSlide(slideId, enabled) {
+    await this.saveHeroSlide(slideId, { enabled },
+      enabled ? 'Foto visible en el carrusel.' : 'Foto oculta del carrusel.');
+  },
+
+  // Quita solo la imagen, conservando la diapositiva y su enlace.
+  async removeHeroSlideImage(slideId) {
+    if (!confirm('Quitar solo la imagen de esta diapositiva?\n\nLa diapositiva se conserva; para borrarla entera usa la papelera.')) return;
+    await this.saveHeroSlide(slideId, { image_url: '' }, 'Imagen quitada de la diapositiva.');
+  },
+
+  async saveHeroSlide(slideId, cambios, mensaje) {
+    try {
+      const res = await fetch(`/api/admin/hero-slides/${slideId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...Auth.getAuthHeaders() },
+        body: JSON.stringify(cambios)
+      });
+      if (!res.ok) throw new Error('No se pudo actualizar la diapositiva.');
+
+      await this.loadHeroTab();
+      await App.fetchHeroSlides();
+      App.showToast(mensaje, 'success');
+    } catch (e) {
+      App.showToast(e.message, 'error');
+    }
+  },
+
+  async moveHeroSlide(index, delta) {
+    const target = index + delta;
+    if (target < 0 || target >= this.heroSlides.length) return;
+
+    const reordenado = [...this.heroSlides];
+    [reordenado[index], reordenado[target]] = [reordenado[target], reordenado[index]];
+    this.heroSlides = reordenado;
+    this.renderHeroList();
+
+    try {
+      const res = await fetch('/api/admin/hero-slides/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...Auth.getAuthHeaders() },
+        body: JSON.stringify({ ordered_ids: reordenado.map(s => s.id) })
+      });
+      if (!res.ok) throw new Error('No se pudo guardar el nuevo orden.');
+      await this.loadHeroTab();
+      await App.fetchHeroSlides();
+    } catch (e) {
+      App.showToast(e.message, 'error');
+      this.loadHeroTab();
+    }
+  },
+
+  async deleteHeroSlide(slideId) {
+    if (!confirm('Eliminar esta foto del carrusel?\n\nEsta accion no se puede deshacer.')) return;
+
+    try {
+      const res = await fetch(`/api/admin/hero-slides/${slideId}`, {
+        method: 'DELETE', headers: Auth.getAuthHeaders()
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'No se pudo eliminar.');
+
+      if (this.editingSlideId === slideId) this.cancelHeroEdit();
+      await this.loadHeroTab();
+      await App.fetchHeroSlides();
+      App.showToast(data.message, 'success');
+    } catch (e) {
+      App.showToast(e.message, 'error');
+    }
+  },
+
+  // ------------------------------------------------------------------
   // CATEGORIAS DE LA PORTADA (las tres tarjetas grandes del inicio)
   // ------------------------------------------------------------------
 
@@ -1043,10 +1378,16 @@ const Admin = {
                   <i data-lucide="upload" class="w-3.5 h-3.5"></i> Subir Foto
                   <input type="file" accept="image/*" class="hidden" onchange="Admin.handleCategoryImageUpload(${c.id}, this)" />
                 </label>
-                <button type="button" onclick="Admin.saveCategory(${c.id})"
-                  class="btn-primary px-5 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider shadow">
-                  Guardar
-                </button>
+                <div class="flex items-center gap-2">
+                  <button type="button" onclick="Admin.deleteCategory(${c.id})" title="Eliminar esta categoria por completo"
+                    class="px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider border border-red-200 text-red-600 hover:bg-red-50 transition-colors inline-flex items-center gap-1.5">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Eliminar
+                  </button>
+                  <button type="button" onclick="Admin.saveCategory(${c.id})"
+                    class="btn-primary px-5 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider shadow">
+                    Guardar
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -1121,6 +1462,64 @@ const Admin = {
 
       await App.fetchCategories();
       App.showToast(`Categoria "${data.name}" actualizada.`, 'success');
+    } catch (e) {
+      App.showToast(e.message, 'error');
+    }
+  },
+
+  async handleCreateCategory(e) {
+    e.preventDefault();
+    const payload = {
+      name: document.getElementById('new-cat-name').value.trim(),
+      tagline: document.getElementById('new-cat-tagline').value.trim(),
+      description: document.getElementById('new-cat-desc').value.trim(),
+      image_url: ''
+    };
+    if (!payload.name) {
+      App.showToast('La categoria necesita un nombre.', 'error');
+      return;
+    }
+
+    try {
+      App.showToast('Creando la categoria...', 'info');
+      const res = await fetch('/api/admin/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...Auth.getAuthHeaders() },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'No se pudo crear la categoria.');
+
+      e.target.reset();
+      await this.loadCategoriesTab();
+      await App.fetchCategories();
+      App.showToast(`Categoria "${data.name}" creada.`, 'success');
+    } catch (err) {
+      App.showToast(err.message, 'error');
+    }
+  },
+
+  async deleteCategory(categoryId) {
+    const cat = this.categories.find(c => c.id === categoryId);
+    if (!cat) return;
+
+    if (!confirm(
+      `Eliminar la categoria "${cat.name}"?\n\n` +
+      'Sus productos NO se borran: quedan sin categoria y los puedes reasignar. ' +
+      'La tarjeta desaparece de la portada. Esta accion no se puede deshacer.'
+    )) return;
+
+    try {
+      const res = await fetch(`/api/admin/categories/${categoryId}`, {
+        method: 'DELETE', headers: Auth.getAuthHeaders()
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'No se pudo eliminar la categoria.');
+
+      await this.loadCategoriesTab();
+      await App.fetchCategories();
+      await App.fetchProducts();
+      App.showToast(data.message, 'success');
     } catch (e) {
       App.showToast(e.message, 'error');
     }

@@ -161,6 +161,26 @@ def init_db():
             (key, title, subtitle, pos)
         )
 
+    # Diapositivas del carrusel de la portada.
+    # link_type: none | catalog | category | section | url
+    # link_value: el slug de la categoria, la clave de la seccion o la URL.
+    # Se guarda la referencia (no la URL final) para que el enlace siga
+    # apuntando bien aunque la categoria o la seccion se renombre.
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS hero_slides (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        image_url TEXT NOT NULL DEFAULT '',
+        title TEXT DEFAULT '',
+        subtitle TEXT DEFAULT '',
+        cta_text TEXT DEFAULT '',
+        link_type TEXT DEFAULT 'none',
+        link_value TEXT DEFAULT '',
+        position INTEGER DEFAULT 0,
+        enabled INTEGER DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+
     # Store Settings table (Logo, Brand, Payment Keys, Google Client ID)
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS settings (
