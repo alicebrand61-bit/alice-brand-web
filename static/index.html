@@ -491,6 +491,30 @@
 
           <!-- TAB 1: STATS & DASHBOARD -->
           <div id="admin-tab-stats" class="space-y-6">
+
+            <!-- Estado de actualizacion automatica de las metricas -->
+            <div class="flex items-center justify-between gap-3 flex-wrap text-xs">
+              <div class="flex items-center gap-2 text-gray-500">
+                <span id="stats-live-dot" class="w-2 h-2 rounded-full bg-green-500"></span>
+                <span id="stats-live-label">Actualizando cada 20 segundos</span>
+                <span class="text-gray-300">&middot;</span>
+                <span id="stats-updated-at" class="font-mono text-gray-400">--:--:--</span>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <label class="flex items-center gap-2 cursor-pointer text-coffee font-semibold">
+                  <input type="checkbox" id="stats-autorefresh" checked onchange="Admin.toggleStatsAutoRefresh(this.checked)"
+                    class="w-4 h-4 accent-[#4D0E12] cursor-pointer" />
+                  <span>Actualizar solo</span>
+                </label>
+                <button type="button" onclick="Admin.loadStats(true)"
+                  class="px-3 py-1.5 rounded-lg border border-[#e4dccb] text-coffee font-bold hover:bg-[#FAF8F5] transition-colors inline-flex items-center gap-1.5">
+                  <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                  <span>Actualizar ahora</span>
+                </button>
+              </div>
+            </div>
+
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               <div class="bg-white p-6 rounded-3xl border border-[#e4dccb] shadow-sm">
                 <div class="flex items-center justify-between text-gray-500 text-xs font-semibold uppercase">

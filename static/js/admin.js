@@ -12,6 +12,17 @@ const Admin = {
     }
 
     this.hideAdminLoginGate();
+
+    // Al volver a la pestana del navegador se refresca de inmediato.
+    if (!this._visibilityHooked) {
+      this._visibilityHooked = true;
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && this.currentTab === 'stats' && this.statsTimer) {
+          this.loadStats();
+        }
+      });
+    }
+
     await this.loadStats();
     await this.loadProducts();
     await this.loadOrders();
@@ -114,7 +125,12 @@ const Admin = {
 
     if (tab === 'orders') this.renderOrdersTable();
     if (tab === 'products') this.renderProductsTable();
-    if (tab === 'stats') this.loadStats();
+    if (tab === 'stats') {
+      this.loadStats();
+      this.startStatsAutoRefresh();
+    } else {
+      this.stopStatsAutoRefresh();
+    }
     if (tab === 'brand') this.loadSettings();
     if (tab === 'typography') this.loadTypographyTab();
     if (tab === 'content') this.loadContentTab();
@@ -127,7 +143,74 @@ const Admin = {
     if (window.lucide) lucide.createIcons();
   },
 
-  async loadStats() {
+  // ------------------------------------------------------------------
+  // METRICAS EN VIVO
+  // El panel consulta /api/admin/stats cada 20 segundos mientras la pestana
+  // esta abierta y visible, para que una venta nueva aparezca sola.
+  // ------------------------------------------------------------------
+
+  statsTimer: null,
+  statsIntervalMs: 20000,
+
+  startStatsAutoRefresh() {
+    this.stopStatsAutoRefresh();
+
+    const activo = document.getElementById('stats-autorefresh');
+    if (activo && !activo.checked) {
+      this.setStatsLiveState(false);
+      return;
+    }
+
+    this.setStatsLiveState(true);
+    this.statsTimer = setInterval(() => {
+      // No se consulta si la pestana del navegador esta en segundo plano.
+      if (document.hidden || this.currentTab !== 'stats') return;
+      this.loadStats();
+    }, this.statsIntervalMs);
+  },
+
+  stopStatsAutoRefresh() {
+    if (this.statsTimer) {
+      clearInterval(this.statsTimer);
+      this.statsTimer = null;
+    }
+  },
+
+  toggleStatsAutoRefresh(activo) {
+    if (activo) {
+      this.startStatsAutoRefresh();
+      this.loadStats();
+    } else {
+      this.stopStatsAutoRefresh();
+      this.setStatsLiveState(false);
+    }
+  },
+
+  setStatsLiveState(activo) {
+    const dot = document.getElementById('stats-live-dot');
+    const label = document.getElementById('stats-live-label');
+    if (dot) {
+      dot.classList.toggle('bg-green-500', activo);
+      dot.classList.toggle('animate-pulse', activo);
+      dot.classList.toggle('bg-gray-400', !activo);
+    }
+    if (label) {
+      label.textContent = activo
+        ? `Actualizando cada ${this.statsIntervalMs / 1000} segundos`
+        : 'Actualizacion automatica desactivada';
+    }
+  },
+
+  markStatsUpdated() {
+    const el = document.getElementById('stats-updated-at');
+    if (el) {
+      el.textContent = new Date().toLocaleTimeString('es-CO', {
+        hour: '2-digit', minute: '2-digit', second: '2-digit'
+      });
+    }
+  },
+
+  async loadStats(manual) {
     try {
       const res = await fetch('/api/admin/stats', {
         headers: Auth.getAuthHeaders()
@@ -135,6 +218,9 @@ const Admin = {
       if (!res.ok) throw new Error('No se pudieron cargar las estadísticas.');
       const data = await res.json();
       
+      this.markStatsUpdated();
+      if (manual) App.showToast('Metricas actualizadas.', 'success');
+
       const revEl = document.getElementById('admin-stat-revenue');
       const ordersEl = document.getElementById('admin-stat-orders');
       const prodEl = document.getElementById('admin-stat-products');
