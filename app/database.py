@@ -225,7 +225,19 @@ def init_db():
         ("hero_side_image_url", "https://images.unsplash.com/photo-1576426863848-c21f53c60b19?auto=format&fit=crop&w=1000&q=85"),
         ("whatsapp_assistance_title", "¿Dudas con tu talla? Te asesoramos en tiempo real por WhatsApp"),
         ("whatsapp_assistance_desc", "Nuestras asesoras de moda te guían para encontrar la prenda perfecta para tu cuerpo antes de comprar."),
-        ("footer_about", "Boutique colombiana de trajes de baño, pareos y complementos de lujo costero. Diseños atemporales confeccionados con pasión y materiales de alta durabilidad.")
+        ("footer_about", "Boutique colombiana de trajes de baño, pareos y complementos de lujo costero. Diseños atemporales confeccionados con pasión y materiales de alta durabilidad."),
+        # Pie de pagina: columna de atencion y envios
+        ("footer_help_title", "Atención & Envíos"),
+        ("footer_help_1", "🇨🇴 Envíos a todo el territorio colombiano"),
+        ("footer_help_2", "🔒 Pagos 100% seguros con PSE & Wompi"),
+        ("footer_help_3", "🧵 Garantía de confección y protección solar UPF 50+"),
+        ("footer_help_4", ""),
+        # Pie de pagina: columna de contacto
+        ("footer_contact_title", "Contacto Directo"),
+        ("footer_contact_phone", "+57 302 3949733"),
+        ("footer_contact_instagram", "@alicee_brand"),
+        ("footer_contact_location", "Colombia"),
+        ("footer_copyright", "© 2026 Alice Brand. Todos los derechos reservados · Hecho con orgullo en Colombia 🇨🇴")
     ]
 
     for k, v in default_settings:

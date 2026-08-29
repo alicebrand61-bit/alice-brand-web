@@ -86,36 +86,39 @@
           </a>
 
           <!-- Desktop Navigation Menu -->
-          <nav class="hidden md:flex items-center gap-4 lg:gap-6 text-xs font-semibold uppercase tracking-widest text-coffee min-w-0">
-            <a href="javascript:void(0)" onclick="App.navigate('home')" class="hover:text-[#4D0E12] transition-colors">Inicio</a>
+          <nav class="hidden md:flex items-center gap-3 lg:gap-4 text-xs font-semibold uppercase tracking-wider text-coffee min-w-0 flex-1 overflow-hidden">
+            <a href="javascript:void(0)" onclick="App.navigate('home')" class="hover:text-[#4D0E12] transition-colors flex-shrink-0">Inicio</a>
             <!-- Categorias del menu: App.renderNavCategories() las toma de la base -->
             <span id="nav-categories-desktop" class="contents"></span>
-            <a href="javascript:void(0)" onclick="App.navigate('about')" class="hover:text-[#4D0E12] transition-colors">Sobre Nosotros</a>
-            <a href="javascript:void(0)" onclick="App.navigate('contact')" class="hover:text-[#4D0E12] transition-colors">Contacto</a>
-            
-            <!-- Direct Admin Link -->
-            <a href="javascript:void(0)" onclick="App.navigate('admin')" class="text-[#4D0E12] bg-[#A5BCD6]/30 hover:bg-[#A5BCD6]/60 border border-[#A5BCD6] px-3 py-1 rounded-full text-[11px] font-bold flex items-center gap-1 shadow-sm transition-all">
-              <span>👑 Panel Admin</span>
-            </a>
+            <a href="javascript:void(0)" onclick="App.navigate('about')" class="hover:text-[#4D0E12] transition-colors flex-shrink-0 whitespace-nowrap">Sobre Nosotros</a>
+            <a href="javascript:void(0)" onclick="App.navigate('contact')" class="hover:text-[#4D0E12] transition-colors flex-shrink-0">Contacto</a>
+
           </nav>
 
           <!-- Actions & Search -->
-          <div class="flex items-center space-x-3">
+          <div class="flex items-center space-x-2 flex-shrink-0">
             
             <!-- Live Search Bar -->
-            <div class="hidden lg:flex items-center relative w-56">
+            <div class="hidden xl:flex items-center relative w-44 2xl:w-56">
               <input type="text" placeholder="Buscar vestidos, bikinis..." 
                 class="app-search-input w-full bg-[#FAF8F5] border border-[#e2d9c4] rounded-full py-1.5 pl-9 pr-3 text-xs focus:outline-none focus:ring-1 focus:ring-[#4D0E12] focus:border-[#4D0E12] transition-all placeholder:text-gray-400" />
               <i data-lucide="search" class="w-3.5 h-3.5 text-gray-400 absolute left-3 pointer-events-none"></i>
             </div>
 
+            <!-- Acceso al panel: solo lo ve el administrador -->
+            <a id="nav-admin-link" href="javascript:void(0)" onclick="App.navigate('admin')" title="Panel de Administraci&oacute;n"
+               class="hidden inline-flex flex-shrink-0 items-center gap-1.5 text-[#4D0E12] bg-[#A5BCD6]/30 hover:bg-[#A5BCD6]/60 border border-[#A5BCD6] px-2.5 py-1.5 rounded-full text-[11px] font-bold shadow-sm transition-all whitespace-nowrap">
+              <span aria-hidden="true">&#128081;</span>
+              <span class="hidden xl:inline">Panel</span>
+            </a>
+
             <!-- User Profile / Auth Button -->
             <div class="relative">
               <button id="nav-user-btn" onclick="Auth.isAuthenticated() ? Auth.logout() : Auth.openModal('login')" 
-                class="flex items-center gap-1.5 text-coffee hover:text-[#4D0E12] transition-colors p-2 text-xs font-semibold">
+                class="flex items-center gap-1.5 text-coffee hover:text-[#4D0E12] transition-colors p-2 text-xs font-semibold max-w-[190px]">
                 <i data-lucide="user" class="w-5 h-5 text-[#4D0E12]"></i>
-                <span id="nav-user-name" class="hidden sm:inline">Ingresar</span>
-                <span id="user-profile-badge" class="hidden text-[10px] bg-[#A5BCD6]/50 px-1.5 py-0.5 rounded font-bold text-dark"></span>
+                <span id="nav-user-name" class="hidden sm:inline truncate max-w-[110px]">Ingresar</span>
+                <span id="user-profile-badge" class="hidden text-[10px] bg-[#A5BCD6]/50 px-1.5 py-0.5 rounded font-bold text-dark flex-shrink-0 whitespace-nowrap"></span>
               </button>
             </div>
 
@@ -1016,8 +1019,47 @@
               <!-- Footer -->
               <div class="bg-[#FAF8F5] p-5 rounded-2xl border border-[#e4dccb] space-y-3">
                 <h4 class="font-bold text-sm text-[#4D0E12]">5. Pie de Página</h4>
-                <label class="block font-semibold text-coffee mb-1">Descripción de la marca</label>
-                <textarea id="cms-footer_about" rows="3" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]"></textarea>
+                <div>
+                  <label class="block font-semibold text-coffee mb-1">Descripción de la marca</label>
+                  <textarea id="cms-footer_about" rows="3" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]"></textarea>
+                </div>
+
+                <p class="text-[11px] text-gray-400 pt-1">Columna de atención: deja una línea vacía para ocultarla.</p>
+                <div>
+                  <label class="block font-semibold text-coffee mb-1">Título de la columna</label>
+                  <input type="text" id="cms-footer_help_title" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]" />
+                </div>
+                <div class="grid grid-cols-1 gap-2">
+                  <input type="text" id="cms-footer_help_1" placeholder="Línea 1" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]" />
+                  <input type="text" id="cms-footer_help_2" placeholder="Línea 2" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]" />
+                  <input type="text" id="cms-footer_help_3" placeholder="Línea 3" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]" />
+                  <input type="text" id="cms-footer_help_4" placeholder="Línea 4 (opcional)" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]" />
+                </div>
+
+                <p class="text-[11px] text-gray-400 pt-1">Columna de contacto directo.</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div>
+                    <label class="block font-semibold text-coffee mb-1">Título de la columna</label>
+                    <input type="text" id="cms-footer_contact_title" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]" />
+                  </div>
+                  <div>
+                    <label class="block font-semibold text-coffee mb-1">Teléfono</label>
+                    <input type="text" id="cms-footer_contact_phone" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]" />
+                  </div>
+                  <div>
+                    <label class="block font-semibold text-coffee mb-1">Instagram</label>
+                    <input type="text" id="cms-footer_contact_instagram" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]" />
+                  </div>
+                  <div>
+                    <label class="block font-semibold text-coffee mb-1">Ubicación</label>
+                    <input type="text" id="cms-footer_contact_location" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]" />
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block font-semibold text-coffee mb-1">Línea de derechos reservados</label>
+                  <input type="text" id="cms-footer_copyright" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]" />
+                </div>
               </div>
 
               <div class="pt-2 border-t border-gray-100 flex justify-end">
@@ -1769,29 +1811,30 @@
           </div>
 
           <div class="space-y-3">
-            <h4 class="font-serif font-bold text-base text-white uppercase tracking-wider">Atención &amp; Envíos</h4>
+            <h4 data-cms="footer_help_title" class="font-serif font-bold text-base text-white uppercase tracking-wider">Atención &amp; Envíos</h4>
             <ul class="space-y-2 text-xs text-white/70">
-              <li><span>🇨🇴 Envíos a todo el territorio colombiano</span></li>
-              <li><span>🔒 Pagos 100% seguros con PSE &amp; Wompi</span></li>
-              <li><span>🧵 Garantía de confección y protección solar UPF 50+</span></li>
-              <li><a href="javascript:void(0)" onclick="App.navigate('admin')" class="text-[#A5BCD6] font-bold underline hover:text-white">👑 Acceso al Panel de Administración</a></li>
+              <li data-cms-item="footer_help_1"><span data-cms="footer_help_1">🇨🇴 Envíos a todo el territorio colombiano</span></li>
+              <li data-cms-item="footer_help_2"><span data-cms="footer_help_2">🔒 Pagos 100% seguros con PSE &amp; Wompi</span></li>
+              <li data-cms-item="footer_help_3"><span data-cms="footer_help_3">🧵 Garantía de confección y protección solar UPF 50+</span></li>
+              <li data-cms-item="footer_help_4" class="hidden"><span data-cms="footer_help_4"></span></li>
+              <li><a id="footer-admin-link" href="javascript:void(0)" onclick="App.navigate('admin')" class="hidden text-[#A5BCD6] font-bold underline hover:text-white">👑 Acceso al Panel de Administración</a></li>
             </ul>
           </div>
 
           <div class="space-y-3">
-            <h4 class="font-serif font-bold text-base text-white uppercase tracking-wider">Contacto Directo</h4>
+            <h4 data-cms="footer_contact_title" class="font-serif font-bold text-base text-white uppercase tracking-wider">Contacto Directo</h4>
             <div class="space-y-2 text-xs text-white/70">
-              <p class="flex items-center gap-2">
-                <i data-lucide="phone" class="w-4 h-4 text-[#A5BCD6]"></i>
-                <span>+57 302 3949733</span>
+              <p data-cms-item="footer_contact_phone" class="flex items-center gap-2">
+                <i data-lucide="phone" class="w-4 h-4 text-[#A5BCD6] flex-shrink-0"></i>
+                <span data-cms="footer_contact_phone">+57 302 3949733</span>
               </p>
-              <p class="flex items-center gap-2">
-                <i data-lucide="instagram" class="w-4 h-4 text-[#A5BCD6]"></i>
-                <span>@alicee_brand</span>
+              <p data-cms-item="footer_contact_instagram" class="flex items-center gap-2">
+                <i data-lucide="instagram" class="w-4 h-4 text-[#A5BCD6] flex-shrink-0"></i>
+                <span data-cms="footer_contact_instagram">@alicee_brand</span>
               </p>
-              <p class="flex items-center gap-2">
-                <i data-lucide="map-pin" class="w-4 h-4 text-[#A5BCD6]"></i>
-                <span>Colombia</span>
+              <p data-cms-item="footer_contact_location" class="flex items-center gap-2">
+                <i data-lucide="map-pin" class="w-4 h-4 text-[#A5BCD6] flex-shrink-0"></i>
+                <span data-cms="footer_contact_location">Colombia</span>
               </p>
             </div>
           </div>
@@ -1799,7 +1842,7 @@
         </div>
 
         <div class="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-white/50 gap-4">
-          <p>© 2026 Alice Brand. Todos los derechos reservados · Hecho con orgullo en Colombia 🇨🇴</p>
+          <p data-cms="footer_copyright">© 2026 Alice Brand. Todos los derechos reservados · Hecho con orgullo en Colombia 🇨🇴</p>
           <div class="flex items-center gap-3">
             <span class="bg-white/10 px-2.5 py-1 rounded text-[10px] text-white font-mono font-bold">PSE</span>
             <span class="bg-white/10 px-2.5 py-1 rounded text-[10px] text-white font-mono font-bold">Wompi</span>

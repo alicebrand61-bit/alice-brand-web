@@ -286,7 +286,9 @@ const Auth = {
       // Se muestra el nombre real del cliente en vez de la palabra "Cliente".
       const fullName = (this.user.full_name || '').trim();
       if (userText) {
-        userText.textContent = fullName || 'Mi cuenta';
+        // Primer nombre para no ensanchar el encabezado; el completo va en el
+        // tooltip y el usuario sigue viendo su nombre, no la palabra "Cliente".
+        userText.textContent = fullName ? fullName.split(' ')[0] : 'Mi cuenta';
         userText.title = fullName;
       }
       if (userBadge) {
@@ -295,13 +297,18 @@ const Auth = {
         userBadge.textContent = esAdmin ? '👑 Admin' : '';
         userBadge.classList.toggle('hidden', !esAdmin);
       }
-      if (adminLink) {
-        adminLink.classList.toggle('hidden', this.user.role !== 'admin');
-      }
+      const esAdministrador = this.user.role === 'admin';
+      if (adminLink) adminLink.classList.toggle('hidden', !esAdministrador);
+
+      // El mismo criterio para el acceso del pie de pagina.
+      const pieAdmin = document.getElementById('footer-admin-link');
+      if (pieAdmin) pieAdmin.classList.toggle('hidden', !esAdministrador);
     } else {
       if (userText) userText.textContent = 'Ingresar';
       if (userBadge) userBadge.classList.add('hidden');
       if (adminLink) adminLink.classList.add('hidden');
+      const pieAdmin = document.getElementById('footer-admin-link');
+      if (pieAdmin) pieAdmin.classList.add('hidden');
     }
   }
 };

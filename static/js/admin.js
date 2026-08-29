@@ -490,7 +490,10 @@ const Admin = {
     'about_title', 'about_subtitle', 'about_story_heading',
     'about_story_p1', 'about_story_p2', 'about_image_url',
     'whatsapp_assistance_title', 'whatsapp_assistance_desc',
-    'footer_about'
+    'footer_about',
+    'footer_help_title', 'footer_help_1', 'footer_help_2', 'footer_help_3', 'footer_help_4',
+    'footer_contact_title', 'footer_contact_phone', 'footer_contact_instagram',
+    'footer_contact_location', 'footer_copyright'
   ],
 
   loadContentTab() {

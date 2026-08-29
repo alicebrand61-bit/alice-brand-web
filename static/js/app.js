@@ -147,6 +147,14 @@ const App = {
       }
     });
 
+    // Lineas del pie que quedan vacias: se oculta la fila entera (con su icono
+    // o su vineta), para que no queden huecos ni iconos sueltos.
+    document.querySelectorAll('[data-cms-item]').forEach(el => {
+      const key = el.getAttribute('data-cms-item');
+      if (!(key in this.settings)) return;
+      el.classList.toggle('hidden', !(this.settings[key] || '').trim());
+    });
+
     // Imagenes editables de la pagina. Si la clave quedo vacia se oculta la
     // foto en vez de dejar la que venia de fabrica.
     document.querySelectorAll('[data-cms-image]').forEach(img => {
@@ -530,21 +538,100 @@ const App = {
   // HTML con imagenes fijas; ahora salen de la base y se editan en el panel.
   // El menu superior se arma con las categorias existentes, para que una
   // categoria nueva aparezca ahi y una eliminada desaparezca sola.
+  //
+  // Para que el encabezado NUNCA se desborde, tras dibujarlo se mide el
+  // espacio real disponible y las categorias que no caben se mueven al
+  // desplegable "Mas". Asi da igual cuantas categorias haya o que tan largo
+  // sea su nombre: siempre cabe.
   renderNavCategories() {
     const desktop = document.getElementById('nav-categories-desktop');
     const mobile = document.getElementById('nav-categories-mobile');
 
-    if (desktop) {
-      desktop.innerHTML = this.categories.map(c => `
-        <a href="javascript:void(0)" onclick="App.navigate('catalog', '${c.slug}')"
-           title="${(c.name || '').replace(/"/g, '&quot;')}"
-           class="hover:text-[#4D0E12] transition-colors whitespace-nowrap">${this.sanitizeCmsHtml(c.name)}</a>`).join('');
-    }
-
+    // En el menu movil caben todas, una debajo de otra.
     if (mobile) {
       mobile.innerHTML = this.categories.map(c => `
         <a href="javascript:void(0)" onclick="App.navigate('catalog', '${c.slug}')"
            class="block py-2 hover:text-[#4D0E12]">${this.sanitizeCmsHtml(c.name)}</a>`).join('');
+    }
+
+    if (!desktop) return;
+
+    desktop.innerHTML = this.categories.map((c, i) => `
+      <a href="javascript:void(0)" onclick="App.navigate('catalog', '${c.slug}')"
+         data-nav-cat="${i}" title="${(c.name || '').replace(/"/g, '&quot;')}"
+         class="hover:text-[#4D0E12] transition-colors whitespace-nowrap flex-shrink-0 truncate max-w-[190px]">${this.sanitizeCmsHtml(c.name)}</a>`).join('')
+      + `
+      <span id="nav-more-wrap" class="relative flex-shrink-0 hidden">
+        <button type="button" onclick="App.toggleNavMore(event)"
+          class="hover:text-[#4D0E12] transition-colors uppercase tracking-widest inline-flex items-center gap-1 whitespace-nowrap">
+          Más <span aria-hidden="true">&#9662;</span>
+        </button>
+        <div id="nav-more-menu"
+          class="hidden absolute right-0 top-full mt-2 min-w-[220px] max-w-[280px] bg-white border border-[#e4dccb] rounded-2xl shadow-xl py-2 z-50"></div>
+      </span>`;
+
+    // Se mide cuando el navegador ya calculo los anchos definitivos. Hacen
+    // falta dos cuadros: en el primero el texto recien insertado aun no tiene
+    // ancho final y la medida sale equivocada.
+    requestAnimationFrame(() => requestAnimationFrame(() => this.fitNavCategories()));
+
+    // Red de seguridad por si las fuentes cargan despues y cambian los anchos.
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => this.fitNavCategories());
+    }
+  },
+
+  // Mueve al desplegable "Mas" las categorias que no quepan en la barra.
+  fitNavCategories() {
+    const desktop = document.getElementById('nav-categories-desktop');
+    const nav = document.querySelector('header nav');
+    const wrap = document.getElementById('nav-more-wrap');
+    const menu = document.getElementById('nav-more-menu');
+    if (!desktop || !nav || !wrap || !menu) return;
+
+    // En movil el menu esta oculto: no hay nada que medir.
+    if (nav.offsetParent === null && nav.clientWidth === 0) return;
+
+    const enlaces = [...desktop.querySelectorAll('[data-nav-cat]')];
+    if (!enlaces.length) return;
+
+    // Se parte de todo visible y se va recogiendo desde el final.
+    enlaces.forEach(a => a.classList.remove('hidden'));
+    wrap.classList.add('hidden');
+    menu.innerHTML = '';
+
+    const desbordado = () => nav.scrollWidth > nav.clientWidth + 1;
+
+    const ocultas = [];
+    for (let i = enlaces.length - 1; i >= 0 && desbordado(); i--) {
+      enlaces[i].classList.add('hidden');
+      ocultas.unshift(this.categories[+enlaces[i].dataset.navCat]);
+      wrap.classList.remove('hidden');
+    }
+
+    if (ocultas.length) {
+      menu.innerHTML = ocultas.map(c => `
+        <a href="javascript:void(0)" onclick="App.navigate('catalog', '${c.slug}')"
+           class="block px-4 py-2 normal-case tracking-normal text-xs hover:bg-[#FAF8F5] hover:text-[#4D0E12] transition-colors">
+          ${this.sanitizeCmsHtml(c.name)}
+        </a>`).join('');
+    } else {
+      wrap.classList.add('hidden');
+    }
+  },
+
+  toggleNavMore(e) {
+    e.stopPropagation();
+    const menu = document.getElementById('nav-more-menu');
+    if (!menu) return;
+    menu.classList.toggle('hidden');
+
+    if (!menu.classList.contains('hidden')) {
+      const cerrar = () => {
+        menu.classList.add('hidden');
+        document.removeEventListener('click', cerrar);
+      };
+      document.addEventListener('click', cerrar);
     }
   },
 
@@ -840,6 +927,15 @@ const App = {
     }, duration);
   },
 
+  // Al cambiar el tamano de la ventana se recalcula que cabe en el menu.
+  setupNavResize() {
+    let t = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(t);
+      t = setTimeout(() => this.fitNavCategories(), 150);
+    });
+  },
+
   setupHeroCarouselControls() {
     const prev = document.getElementById('hero-prev');
     const next = document.getElementById('hero-next');
@@ -873,6 +969,7 @@ const App = {
 
   setupEventListeners() {
     this.setupHeroCarouselControls();
+    this.setupNavResize();
 
     const searchInputs = document.querySelectorAll('.app-search-input');
     searchInputs.forEach(input => {
