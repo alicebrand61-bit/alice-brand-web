@@ -11,6 +11,8 @@ const App = {
   selectedModalColor: null,
   settings: {},
   sections: [],
+  // Marcador propio para productos sin foto (antes se colaba una imagen de archivo).
+  PLACEHOLDER_IMG: '/static/images/placeholder-producto.svg',
 
   async init() {
     await this.fetchSettings();
@@ -402,7 +404,7 @@ const App = {
   },
 
   createProductCardHtml(product) {
-    const mainImg = product.images && product.images.length ? product.images[0] : 'https://images.unsplash.com/photo-1576426863848-c21f53c60b19?w=600';
+    const mainImg = product.images && product.images.length ? product.images[0] : App.PLACEHOLDER_IMG;
     const secondImg = product.images && product.images.length > 1 ? product.images[1] : mainImg;
 
     return `
@@ -488,7 +490,7 @@ const App = {
     const mainImg = document.getElementById('modal-prod-main-img');
     const thumbContainer = document.getElementById('modal-prod-thumbnails');
     
-    if (mainImg) mainImg.src = p.images[0] || 'https://images.unsplash.com/photo-1576426863848-c21f53c60b19?w=800';
+    if (mainImg) mainImg.src = p.images[0] || App.PLACEHOLDER_IMG;
     if (thumbContainer) {
       thumbContainer.innerHTML = p.images.map((img, i) => `
         <img src="${img}" onclick="document.getElementById('modal-prod-main-img').src = '${img}'" 

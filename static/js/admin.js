@@ -738,7 +738,7 @@ const Admin = {
     tbody.innerHTML = this.products.map(p => `
       <tr class="border-b border-gray-100 hover:bg-gray-50/80 transition-colors text-xs">
         <td class="p-3.5">
-          <img src="${p.images[0] || 'https://images.unsplash.com/photo-1576426863848-c21f53c60b19?w=100'}" class="w-12 h-14 object-cover rounded-lg shadow-sm border border-gray-200" />
+          <img src="${p.images[0] || Admin.PLACEHOLDER_IMG}" class="w-12 h-14 object-cover rounded-lg shadow-sm border border-gray-200" />
         </td>
         <td class="p-3.5 font-medium text-dark">
           <div class="font-bold text-sm text-dark">${p.name}</div>
@@ -847,9 +847,10 @@ const Admin = {
     document.getElementById('prod-form-desc').value = '';
     document.getElementById('prod-form-price').value = '';
     document.getElementById('prod-form-stock').value = '15';
-    document.getElementById('prod-form-images').value = 'https://images.unsplash.com/photo-1576426863848-c21f53c60b19?auto=format&fit=crop&w=1000&q=85';
+    document.getElementById('prod-form-images').value = '';
     document.getElementById('prod-form-featured').checked = false;
     document.getElementById('prod-form-new').checked = true;
+    this.renderProductImages();
 
     const modal = document.getElementById('admin-product-modal');
     if (modal) modal.classList.add('active');
@@ -869,6 +870,7 @@ const Admin = {
     document.getElementById('prod-form-images').value = p.images.join('\n');
     document.getElementById('prod-form-featured').checked = p.featured;
     document.getElementById('prod-form-new').checked = p.is_new;
+    this.renderProductImages();
 
     const modal = document.getElementById('admin-product-modal');
     if (modal) modal.classList.add('active');
@@ -877,6 +879,100 @@ const Admin = {
   closeProductModal() {
     const modal = document.getElementById('admin-product-modal');
     if (modal) modal.classList.remove('active');
+  },
+
+  PLACEHOLDER_IMG: '/static/images/placeholder-producto.svg',
+
+  // ------------------------------------------------------------------
+  // IMAGENES DEL PRODUCTO (quitar una por una o todas, incluidas las
+  // que venian de fabrica en el catalogo original)
+  // ------------------------------------------------------------------
+
+  getProductImages() {
+    const area = document.getElementById('prod-form-images');
+    if (!area) return [];
+    return area.value.split('\n').map(s => s.trim()).filter(Boolean);
+  },
+
+  setProductImages(urls) {
+    const area = document.getElementById('prod-form-images');
+    if (area) area.value = urls.join('\n');
+    this.renderProductImages();
+  },
+
+  // Dibuja una miniatura por imagen con su boton para quitarla.
+  renderProductImages() {
+    const cont = document.getElementById('prod-images-preview');
+    if (!cont) return;
+
+    const urls = this.getProductImages();
+
+    if (urls.length === 0) {
+      cont.innerHTML = `
+        <div class="flex items-center gap-3 p-3 rounded-xl border border-dashed border-gray-300 bg-gray-50">
+          <img src="${this.PLACEHOLDER_IMG}" class="w-10 h-12 object-cover rounded-lg opacity-70" alt="" />
+          <p class="text-[11px] text-gray-500">
+            Este producto no tiene imagenes. Se mostrara un marcador de posicion hasta que subas una foto.
+          </p>
+        </div>`;
+      return;
+    }
+
+    cont.innerHTML = `
+      <div class="flex flex-wrap gap-2">
+        ${urls.map((url, i) => `
+          <div class="relative group">
+            <img src="${url.replace(/"/g, '&quot;')}" onerror="this.src='${this.PLACEHOLDER_IMG}'"
+                 class="w-16 h-20 object-cover rounded-lg border border-gray-200 shadow-sm" alt="" />
+            ${i === 0 ? '<span class="absolute bottom-0 inset-x-0 bg-[#4D0E12] text-white text-[8px] text-center font-bold py-0.5 rounded-b-lg">PRINCIPAL</span>' : ''}
+            <button type="button" onclick="Admin.removeProductImage(${i})" title="Quitar esta imagen"
+              class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-600 text-white text-xs font-bold flex items-center justify-center shadow hover:bg-red-700">
+              &times;
+            </button>
+          </div>`).join('')}
+      </div>
+      <button type="button" onclick="Admin.removeAllProductImages()"
+        class="mt-2 text-[11px] font-bold text-red-600 hover:underline">
+        Quitar todas las imagenes de este producto
+      </button>`;
+  },
+
+  removeProductImage(index) {
+    const urls = this.getProductImages();
+    urls.splice(index, 1);
+    this.setProductImages(urls);
+  },
+
+  removeAllProductImages() {
+    this.setProductImages([]);
+    App.showToast('Imagenes quitadas. Recuerda guardar el producto.', 'info');
+  },
+
+  // Vacia de una sola vez las imagenes de TODO el catalogo.
+  async clearCatalogImages() {
+    const total = this.products.length;
+    if (!confirm(
+      `Quitar las imagenes de los ${total} productos del catalogo?\n\n` +
+      'Los productos, precios y descripciones se conservan: solo se borran las fotos ' +
+      'para que puedas subir las tuyas. Esta accion no se puede deshacer.'
+    )) return;
+
+    try {
+      App.showToast('Vaciando las imagenes del catalogo...', 'info');
+      const res = await fetch('/api/admin/products/clear-images', {
+        method: 'POST',
+        headers: Auth.getAuthHeaders()
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'No se pudieron quitar las imagenes.');
+
+      await this.loadProducts();
+      this.renderProductsTable();
+      await App.fetchProducts();
+      App.showToast(data.message, 'success');
+    } catch (e) {
+      App.showToast(e.message, 'error');
+    }
   },
 
   async handleProductSubmit(e) {
@@ -904,7 +1000,8 @@ const Admin = {
         { name: "Azul Cielo", hex: "#A5BCD6" },
         { name: "Arena Suave", hex: "#F5EFC6" }
       ],
-      images: images.length ? images : ['https://images.unsplash.com/photo-1576426863848-c21f53c60b19?auto=format&fit=crop&w=1000&q=85'],
+      // Se respeta la lista tal cual: un producto puede quedarse sin imagenes.
+      images,
       stock,
       featured,
       is_new
@@ -991,6 +1088,7 @@ const Admin = {
       const imagesArea = document.getElementById('prod-form-images');
       if (imagesArea) {
         imagesArea.value = (imagesArea.value ? imagesArea.value + '\n' : '') + data.url;
+        this.renderProductImages();
       }
       App.showToast('¡Imagen subida exitosamente!', 'success');
     } catch (e) {

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500" width="400" height="500" role="img" aria-label="Producto sin imagen">
+  <rect width="400" height="500" fill="#FAF8F5"/>
+  <rect x="8" y="8" width="384" height="484" fill="none" stroke="#e4dccb" stroke-width="2" stroke-dasharray="10 8" rx="18"/>
+  <g stroke="#4D0E12" stroke-width="6" fill="none" opacity="0.28" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="130" y="196" width="140" height="108" rx="12"/>
+    <path d="M130 274l38-36 30 28 34-32 38 36"/>
+    <circle cx="238" cy="226" r="12"/>
+  </g>
+  <text x="200" y="352" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="23" fill="#4D0E12" opacity="0.75">Sin imagen</text>
+  <text x="200" y="382" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#4A2E27" opacity="0.55">Agrega una foto desde el panel</text>
+</svg>

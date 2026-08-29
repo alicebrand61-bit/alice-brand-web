@@ -9,8 +9,14 @@ venv/
 ENV/
 .venv
 
-# SQLite DB (optional: can be committed if user wants initial demo data)
-# alice_brand.db
+# Base de datos SQLite: NO se versiona.
+# Contiene los datos reales de la tienda (productos, pedidos, clientes, ajustes)
+# y se regenera sola al arrancar con app/seed_data.py, asi cada push lleva
+# unicamente cambios de codigo.
+alice_brand.db
+
+# Imagenes subidas desde el panel de administracion
+app/uploads/
 
 # Environment variables
 .env

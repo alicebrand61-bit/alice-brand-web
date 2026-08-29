@@ -625,6 +625,12 @@
                 <h3 class="font-serif font-bold text-xl text-dark">Catálogo &amp; Control de Existencias</h3>
                 <p class="text-xs text-gray-500 mt-0.5">Puedes ajustar el stock en tiempo real con los botones (+) y (-), o editar fotos y precios.</p>
               </div>
+
+              <button onclick="Admin.clearCatalogImages()" title="Quitar las fotos de todos los productos para subir las tuyas"
+                class="px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-red-200 text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2 flex-shrink-0">
+                <i data-lucide="image-off" class="w-4 h-4"></i>
+                <span>Vaciar Im&aacute;genes</span>
+              </button>
             </div>
             <div class="overflow-x-auto">
               <table class="w-full text-left">
@@ -1586,7 +1592,8 @@
 
         <div>
           <label class="block font-semibold text-coffee mb-1">Imágenes del Producto (URLs, una por línea)</label>
-          <textarea id="prod-form-images" rows="2" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12] font-mono text-[11px]" placeholder="https://images.unsplash.com/..."></textarea>
+          <div id="prod-images-preview" class="mb-2"></div>
+          <textarea id="prod-form-images" rows="2" oninput="Admin.renderProductImages()" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12] font-mono text-[11px]" placeholder="Una URL por l&iacute;nea. D&eacute;jalo vac&iacute;o si el producto a&uacute;n no tiene fotos."></textarea>
           
           <div class="mt-2 flex items-center gap-2">
             <label class="btn-sand px-3 py-1.5 rounded-lg text-[11px] font-bold cursor-pointer flex items-center gap-1.5">

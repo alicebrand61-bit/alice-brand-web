@@ -235,6 +235,24 @@ def delete_product(product_id: int, admin: dict = Depends(get_current_admin)):
     execute_db("DELETE FROM products WHERE id = ?", (product_id,))
     return {"success": True, "message": f"Producto '{existing['name']}' eliminado correctamente."}
 
+@router.post("/products/clear-images")
+def clear_catalog_images(admin: dict = Depends(get_current_admin)):
+    """Deja sin fotos todos los productos, conservando el resto de los datos.
+
+    Sirve para partir de un catalogo limpio y subir las imagenes propias.
+    """
+    total_row = query_db("SELECT COUNT(*) as c FROM products", one=True)
+    total = total_row["c"] if total_row else 0
+
+    execute_db("UPDATE products SET images = ?", (json.dumps([]),))
+
+    return {
+        "success": True,
+        "cleared": total,
+        "message": f"Se quitaron las imagenes de {total} productos. Ya puedes subir las tuyas."
+    }
+
+
 @router.post("/upload")
 async def upload_image(file: UploadFile = File(...), admin: dict = Depends(get_current_admin)):
     # Validate extension
