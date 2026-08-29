@@ -110,6 +110,18 @@ def update_order_status(
     execute_db(sql, params)
     return {"success": True, "message": f"Orden {order['order_number']} actualizada a estado: {status_in.order_status}"}
 
+@router.delete("/orders/{order_id}")
+def delete_order(order_id: int, admin: dict = Depends(get_current_admin)):
+    """Elimina un pedido y sus articulos. Util para limpiar pedidos de prueba."""
+    existing = query_db("SELECT * FROM orders WHERE id = ?", (order_id,), one=True)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Orden no encontrada.")
+
+    execute_db("DELETE FROM order_items WHERE order_id = ?", (order_id,))
+    execute_db("DELETE FROM orders WHERE id = ?", (order_id,))
+    return {"success": True, "message": f"Pedido {existing['order_number']} eliminado del historial."}
+
+
 @router.post("/products", response_model=ProductOut)
 def create_product(product_in: ProductCreate, admin: dict = Depends(get_current_admin)):
     # Generate unique slug if not provided

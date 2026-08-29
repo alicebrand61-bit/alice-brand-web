@@ -88,9 +88,8 @@
           <!-- Desktop Navigation Menu -->
           <nav class="hidden md:flex items-center space-x-7 text-xs font-semibold uppercase tracking-widest text-coffee">
             <a href="javascript:void(0)" onclick="App.navigate('home')" class="hover:text-[#4D0E12] transition-colors">Inicio</a>
-            <a href="javascript:void(0)" onclick="App.navigate('catalog', 'vestidos-de-bano')" class="hover:text-[#4D0E12] transition-colors">Vestidos de Baño</a>
-            <a href="javascript:void(0)" onclick="App.navigate('catalog', 'accesorios')" class="hover:text-[#4D0E12] transition-colors">Accesorios</a>
-            <a href="javascript:void(0)" onclick="App.navigate('catalog', 'colecciones')" class="hover:text-[#4D0E12] transition-colors">Colecciones</a>
+            <!-- Categorias del menu: App.renderNavCategories() las toma de la base -->
+            <span id="nav-categories-desktop" class="contents"></span>
             <a href="javascript:void(0)" onclick="App.navigate('about')" class="hover:text-[#4D0E12] transition-colors">Sobre Nosotros</a>
             <a href="javascript:void(0)" onclick="App.navigate('contact')" class="hover:text-[#4D0E12] transition-colors">Contacto</a>
             
@@ -144,9 +143,7 @@
       <!-- Mobile Dropdown Navigation -->
       <div id="mobile-menu" class="hidden md:hidden border-t border-gray-200 bg-white px-4 pt-2 pb-4 space-y-2 text-sm font-medium text-coffee">
         <a href="javascript:void(0)" onclick="App.navigate('home')" class="block py-2 hover:text-[#4D0E12]">Inicio</a>
-        <a href="javascript:void(0)" onclick="App.navigate('catalog', 'vestidos-de-bano')" class="block py-2 hover:text-[#4D0E12]">Vestidos de Baño</a>
-        <a href="javascript:void(0)" onclick="App.navigate('catalog', 'accesorios')" class="block py-2 hover:text-[#4D0E12]">Accesorios</a>
-        <a href="javascript:void(0)" onclick="App.navigate('catalog', 'colecciones')" class="block py-2 hover:text-[#4D0E12]">Colecciones</a>
+        <div id="nav-categories-mobile"></div>
         <a href="javascript:void(0)" onclick="App.navigate('about')" class="block py-2 hover:text-[#4D0E12]">Sobre Nosotros</a>
         <a href="javascript:void(0)" onclick="App.navigate('contact')" class="block py-2 hover:text-[#4D0E12]">Contacto</a>
         <a href="javascript:void(0)" onclick="App.navigate('admin')" class="block py-2 text-[#4D0E12] font-bold bg-[#A5BCD6]/20 px-3 rounded-lg">👑 Panel de Administración</a>
@@ -595,6 +592,8 @@
                     <th class="p-4">Total COP</th>
                     <th class="p-4">Estado de Entrega</th>
                     <th class="p-4">Fecha</th>
+                  
+                    <th class="p-4 text-right">Acciones</th>
                   </tr>
                 </thead>
                 <tbody id="admin-orders-tbody"></tbody>
@@ -629,6 +628,19 @@
                     <input type="file" accept="image/*" class="hidden" onchange="Admin.handleLogoUpload(this)" />
                   </label>
                   <p class="text-[11px] text-gray-400">El logo cambiará instantáneamente en el Header, Footer y vistas de clientes.</p>
+
+                  <div class="pt-2 space-y-1">
+                    <label class="block font-semibold text-coffee">
+                      Tama&ntilde;o del logo: <span id="logo-size-value" class="font-mono text-[#4D0E12]">48</span> px de alto
+                    </label>
+                    <input type="range" id="settings-logo-height" min="24" max="120" step="2" value="48"
+                      oninput="Admin.previewLogoHeight(this.value)"
+                      class="w-full max-w-xs accent-[#4D0E12] cursor-pointer" />
+                    <p class="text-[11px] text-gray-400">
+                      Mueve la barra para ver el cambio al instante y pulsa
+                      <strong>Guardar Ajustes de Marca</strong> para dejarlo fijo.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1653,11 +1665,8 @@
           </div>
           <div>
             <label class="block font-semibold text-coffee mb-1">Categoría *</label>
-            <select id="prod-form-category" required class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12] bg-white">
-              <option value="1">Vestidos de Baño</option>
-              <option value="2">Accesorios</option>
-              <option value="3">Colecciones</option>
-            </select>
+            <!-- Se llena en Admin.fillProductCategorySelect() con las categorias reales -->
+            <select id="prod-form-category" required class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12] bg-white"></select>
           </div>
           <div>
             <label class="block font-semibold text-coffee mb-1">Stock Disponible *</label>

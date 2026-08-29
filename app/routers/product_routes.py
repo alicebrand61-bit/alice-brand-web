@@ -36,6 +36,7 @@ def get_public_settings():
     # Exclude sensitive secrets from public endpoint
     safe_settings = {
         "logo_url": settings_dict.get("logo_url", "/static/images/logo-ab.svg"),
+        "logo_height": settings_dict.get("logo_height", "48"),
         "brand_name": settings_dict.get("brand_name", "Alice Brand"),
         "brand_slogan": settings_dict.get("brand_slogan", "SWIMWEAR & RESORT WEAR · COLOMBIA"),
         "primary_color": settings_dict.get("primary_color", "#4D0E12"),

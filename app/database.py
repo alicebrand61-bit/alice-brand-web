@@ -192,6 +192,7 @@ def init_db():
     # Insert default settings if empty
     default_settings = [
         ("logo_url", "/static/images/logo-ab.svg"),
+        ("logo_height", "48"),  # alto del logo en pixeles, ajustable desde el panel
         ("brand_name", "Alice Brand"),
         ("brand_slogan", "SWIMWEAR & RESORT WEAR · COLOMBIA"),
         ("primary_color", "#4D0E12"),

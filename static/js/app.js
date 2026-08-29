@@ -48,8 +48,14 @@ const App = {
 
   applySettingsToDOM() {
     const logoImgs = document.querySelectorAll('.brand-logo-img');
+    const alto = parseInt(this.settings.logo_height, 10);
     logoImgs.forEach(img => {
       if (this.settings.logo_url) img.src = this.settings.logo_url;
+      // El alto se fija desde el panel; el ancho se ajusta solo.
+      if (alto > 0) {
+        img.style.height = `${alto}px`;
+        img.style.width = 'auto';
+      }
     });
 
     const waLinks = document.querySelectorAll('.dynamic-whatsapp-link');
@@ -494,6 +500,7 @@ const App = {
         this.categories = await res.json();
         this.renderCategoryPills();
         this.renderCategoryCards();
+        this.renderNavCategories();
       }
     } catch (e) {
       console.error("Error fetching categories", e);
@@ -519,6 +526,25 @@ const App = {
 
   // Tarjetas de categoria de la portada. Antes estaban escritas a mano en el
   // HTML con imagenes fijas; ahora salen de la base y se editan en el panel.
+  // El menu superior se arma con las categorias existentes, para que una
+  // categoria nueva aparezca ahi y una eliminada desaparezca sola.
+  renderNavCategories() {
+    const desktop = document.getElementById('nav-categories-desktop');
+    const mobile = document.getElementById('nav-categories-mobile');
+
+    if (desktop) {
+      desktop.innerHTML = this.categories.map(c => `
+        <a href="javascript:void(0)" onclick="App.navigate('catalog', '${c.slug}')"
+           class="hover:text-[#4D0E12] transition-colors">${this.sanitizeCmsHtml(c.name)}</a>`).join('');
+    }
+
+    if (mobile) {
+      mobile.innerHTML = this.categories.map(c => `
+        <a href="javascript:void(0)" onclick="App.navigate('catalog', '${c.slug}')"
+           class="block py-2 hover:text-[#4D0E12]">${this.sanitizeCmsHtml(c.name)}</a>`).join('');
+    }
+  },
+
   renderCategoryCards() {
     const grid = document.getElementById('category-showcase-grid');
     if (!grid) return;

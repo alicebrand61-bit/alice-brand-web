@@ -18,15 +18,9 @@ def seed_database():
     admin_password = os.getenv("ADMIN_PASSWORD", "admin123")
     admin_pass_hash = hash_password(admin_password)
 
-    customer_pass = hash_password("cliente123")
-
     execute_db(
         "INSERT INTO users (email, full_name, phone, password_hash, role, auth_provider) VALUES (?, ?, ?, ?, ?, ?)",
         (admin_email, "Admin Alice Brand", "+573023949733", admin_pass_hash, "admin", "local")
-    )
-    execute_db(
-        "INSERT INTO users (email, full_name, phone, password_hash, role, auth_provider) VALUES (?, ?, ?, ?, ?, ?)",
-        ("cliente@alicebrand.com", "Camila Restrepo", "+573105559876", customer_pass, "customer", "local")
     )
 
     # 2. Seed Categories
@@ -221,76 +215,14 @@ def seed_database():
             )
         )
 
-    # 4. Seed an initial sample order for testing admin view
-    order_id = execute_db(
-        """
-        INSERT INTO orders (
-            order_number, user_id, customer_name, customer_email, customer_phone,
-            department, city, address, address_details, subtotal_cop, shipping_cop,
-            discount_cop, total_cop, payment_method, payment_status, pse_bank,
-            pse_transaction_id, order_status, notes
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            "ALICE-2026-0089",
-            2,
-            "Camila Restrepo",
-            "cliente@alicebrand.com",
-            "+573105559876",
-            "Antioquia",
-            "Medellín",
-            "Cra 43A # 1-50, El Poblado",
-            "Apto 802, Edificio Palma",
-            415000.0,
-            0.0,
-            0.0,
-            415000.0,
-            "PSE",
-            "completed",
-            "Bancolombia",
-            "PSE-TX-88492019",
-            "En Preparación",
-            "Enviar empacado para regalo con bolsa Alice Brand"
-        )
-    )
+    # No se crean pedidos ni clientes de demostracion: la tienda arranca con el
+    # historial vacio y las metricas en cero, listas para las ventas reales.
 
-    execute_db(
-        """
-        INSERT INTO order_items (order_id, product_id, product_name, product_image, size, color, quantity, unit_price_cop, subtotal_cop)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            order_id,
-            1,
-            "Bikini Triángulo Caribe Esmeralda",
-            "https://images.unsplash.com/photo-1576426863848-c21f53c60b19?auto=format&fit=crop&w=1000&q=85",
-            "M",
-            "Verde Oliva",
-            1,
-            185000.0,
-            185000.0
-        )
-    )
-
-    execute_db(
-        """
-        INSERT INTO order_items (order_id, product_id, product_name, product_image, size, color, quantity, unit_price_cop, subtotal_cop)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            order_id,
-            2,
-            "Enterizo Asimétrico Barú",
-            "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1000&q=85",
-            "S",
-            "Azul Cielo",
-            1,
-            230000.0,
-            230000.0
-        )
-    )
-
-    print("[OK] Base de datos inicializada exitosamente con productos y usuarios de prueba.")
+    print("[OK] Base de datos inicializada: catalogo base y usuario administrador.")
+    if admin_password == "admin123":
+        print("[!] ATENCION: el administrador esta usando la clave por defecto.")
+        print("[!] En produccion define las variables ADMIN_EMAIL y ADMIN_PASSWORD")
+        print("[!] antes del primer arranque, o cambia la clave desde el panel.")
 
 if __name__ == "__main__":
     seed_database()

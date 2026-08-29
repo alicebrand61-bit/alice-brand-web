@@ -16,6 +16,7 @@ const Admin = {
     await this.loadProducts();
     await this.loadOrders();
     await this.loadSettings();
+    await this.loadCategoriesTab();
     this.switchTab('stats');
   },
 
@@ -223,6 +224,23 @@ const Admin = {
     if (preview && s.logo_url) {
       preview.src = s.logo_url;
     }
+
+    const alto = parseInt(s.logo_height, 10) || 48;
+    const slider = document.getElementById('settings-logo-height');
+    if (slider) slider.value = alto;
+    const valor = document.getElementById('logo-size-value');
+    if (valor) valor.textContent = alto;
+  },
+
+  // Aplica el tamano en vivo mientras se mueve la barra, sin guardar todavia.
+  previewLogoHeight(alto) {
+    const valor = document.getElementById('logo-size-value');
+    if (valor) valor.textContent = alto;
+
+    document.querySelectorAll('.brand-logo-img').forEach(img => {
+      img.style.height = `${alto}px`;
+      img.style.width = 'auto';
+    });
   },
 
   async handleLogoUpload(input) {
@@ -708,7 +726,8 @@ const Admin = {
       instagram_url: document.getElementById('settings-instagram').value.trim(),
       google_client_id: document.getElementById('settings-google-client-id').value.trim(),
       wompi_public_key: document.getElementById('settings-wompi-pub-key').value.trim(),
-      wompi_integrity_secret: document.getElementById('settings-wompi-secret').value.trim()
+      wompi_integrity_secret: document.getElementById('settings-wompi-secret').value.trim(),
+      logo_height: document.getElementById('settings-logo-height').value
     };
 
     try {
@@ -804,6 +823,32 @@ const Admin = {
     }
   },
 
+  async deleteOrder(orderId) {
+    const o = this.orders.find(x => x.id === orderId);
+    if (!o) return;
+    if (!confirm(
+      `Eliminar el pedido ${o.order_number} de ${o.customer_name}?
+
+` +
+      'Desaparece del historial y deja de contar en las metricas. No se puede deshacer.'
+    )) return;
+
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}`, {
+        method: 'DELETE', headers: Auth.getAuthHeaders()
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'No se pudo eliminar el pedido.');
+
+      await this.loadOrders();
+      this.renderOrdersTable();
+      await this.loadStats();
+      App.showToast(data.message, 'success');
+    } catch (e) {
+      App.showToast(e.message, 'error');
+    }
+  },
+
   renderOrdersTable() {
     const tbody = document.getElementById('admin-orders-tbody');
     if (!tbody) return;
@@ -838,10 +883,29 @@ const Admin = {
           </select>
         </td>
         <td class="p-3.5 text-gray-500">${o.created_at ? o.created_at.split(' ')[0] : 'Hoy'}</td>
+        <td class="p-3.5 text-right">
+          <button type="button" onclick="Admin.deleteOrder(${o.id})" title="Eliminar este pedido del historial"
+            class="w-8 h-8 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 inline-flex items-center justify-center">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+        </td>
       </tr>
     `).join('');
 
     if (window.lucide) lucide.createIcons();
+  },
+
+  // Rellena el desplegable de categorias del formulario con las que existen hoy.
+  fillProductCategorySelect(seleccionada) {
+    const select = document.getElementById('prod-form-category');
+    if (!select) return;
+
+    const cats = (this.categories.length ? this.categories : App.categories) || [];
+    select.innerHTML = cats.length
+      ? cats.map(c => `<option value="${c.id}">${this.escapeHtml(c.name)}</option>`).join('')
+      : '<option value="">Primero crea una categoria</option>';
+
+    if (seleccionada) select.value = seleccionada;
   },
 
   openCreateProductModal() {
@@ -852,6 +916,7 @@ const Admin = {
     document.getElementById('prod-form-price').value = '';
     document.getElementById('prod-form-stock').value = '15';
     document.getElementById('prod-form-images').value = '';
+    this.fillProductCategorySelect();
     document.getElementById('prod-form-featured').checked = false;
     document.getElementById('prod-form-new').checked = true;
     this.renderProductImages();
@@ -869,7 +934,7 @@ const Admin = {
     document.getElementById('prod-form-name').value = p.name;
     document.getElementById('prod-form-desc').value = p.description;
     document.getElementById('prod-form-price').value = p.price_cop;
-    document.getElementById('prod-form-category').value = p.category_id || '1';
+    this.fillProductCategorySelect(p.category_id);
     document.getElementById('prod-form-stock').value = p.stock;
     document.getElementById('prod-form-images').value = p.images.join('\n');
     document.getElementById('prod-form-featured').checked = p.featured;
