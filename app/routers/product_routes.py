@@ -56,7 +56,8 @@ def get_public_settings():
     # con alguno de estos prefijos, para no tener que tocar el backend cada vez
     # que se agregue un texto nuevo en el frontend.
     CMS_PREFIXES = (
-        "announcement_", "hero_", "about_", "whatsapp_assistance_", "footer_"
+        "announcement_", "hero_", "about_", "whatsapp_assistance_", "footer_",
+        "nav_"
     )
     for key, value in settings_dict.items():
         if key.startswith(CMS_PREFIXES):

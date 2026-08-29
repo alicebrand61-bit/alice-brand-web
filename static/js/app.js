@@ -75,6 +75,11 @@ const App = {
 
     this.applyTypography();
     this.applyCmsTexts();
+
+    // Los nombres del menu cambian de ancho: hay que recalcular que cabe.
+    // Dos cuadros, igual que al dibujarlo: en el primero el texto recien
+    // puesto aun no tiene su ancho definitivo.
+    requestAnimationFrame(() => requestAnimationFrame(() => this.fitNavCategories()));
   },
 
   // Fuentes clasicas de Microsoft Word / del sistema. Ya estan instaladas en el
@@ -582,7 +587,7 @@ const App = {
   },
 
   // Mueve al desplegable "Mas" las categorias que no quepan en la barra.
-  fitNavCategories() {
+  fitNavCategories(pasada) {
     const desktop = document.getElementById('nav-categories-desktop');
     const nav = document.querySelector('header nav');
     const wrap = document.getElementById('nav-more-wrap');
@@ -617,6 +622,12 @@ const App = {
         </a>`).join('');
     } else {
       wrap.classList.add('hidden');
+    }
+
+    // Segunda pasada: mostrar el boton "Mas" cambia los anchos, asi que se
+    // vuelve a comprobar una vez. El contador evita repetirlo sin fin.
+    if (desbordado() && (pasada || 0) < 2) {
+      requestAnimationFrame(() => this.fitNavCategories((pasada || 0) + 1));
     }
   },
 

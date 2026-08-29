@@ -297,18 +297,13 @@ const Auth = {
         userBadge.textContent = esAdmin ? '👑 Admin' : '';
         userBadge.classList.toggle('hidden', !esAdmin);
       }
-      const esAdministrador = this.user.role === 'admin';
-      if (adminLink) adminLink.classList.toggle('hidden', !esAdministrador);
-
-      // El mismo criterio para el acceso del pie de pagina.
-      const pieAdmin = document.getElementById('footer-admin-link');
-      if (pieAdmin) pieAdmin.classList.toggle('hidden', !esAdministrador);
+      // El acceso al panel solo se ofrece al administrador, y unicamente
+      // desde el encabezado (se quito del pie de pagina).
+      if (adminLink) adminLink.classList.toggle('hidden', this.user.role !== 'admin');
     } else {
       if (userText) userText.textContent = 'Ingresar';
       if (userBadge) userBadge.classList.add('hidden');
       if (adminLink) adminLink.classList.add('hidden');
-      const pieAdmin = document.getElementById('footer-admin-link');
-      if (pieAdmin) pieAdmin.classList.add('hidden');
     }
   }
 };

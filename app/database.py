@@ -226,6 +226,10 @@ def init_db():
         ("whatsapp_assistance_title", "¿Dudas con tu talla? Te asesoramos en tiempo real por WhatsApp"),
         ("whatsapp_assistance_desc", "Nuestras asesoras de moda te guían para encontrar la prenda perfecta para tu cuerpo antes de comprar."),
         ("footer_about", "Boutique colombiana de trajes de baño, pareos y complementos de lujo costero. Diseños atemporales confeccionados con pasión y materiales de alta durabilidad."),
+        # Etiquetas del menu superior (y del pie), editables desde el panel
+        ("nav_home_label", "Inicio"),
+        ("nav_about_label", "Sobre Nosotros"),
+        ("nav_contact_label", "Contacto"),
         # Pie de pagina: columna de atencion y envios
         ("footer_help_title", "Atención & Envíos"),
         ("footer_help_1", "🇨🇴 Envíos a todo el territorio colombiano"),

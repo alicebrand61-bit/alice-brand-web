@@ -87,11 +87,11 @@
 
           <!-- Desktop Navigation Menu -->
           <nav class="hidden md:flex items-center gap-3 lg:gap-4 text-xs font-semibold uppercase tracking-wider text-coffee min-w-0 flex-1 overflow-hidden">
-            <a href="javascript:void(0)" onclick="App.navigate('home')" class="hover:text-[#4D0E12] transition-colors flex-shrink-0">Inicio</a>
+            <a href="javascript:void(0)" onclick="App.navigate('home')" data-cms="nav_home_label" class="hover:text-[#4D0E12] transition-colors flex-shrink-0 whitespace-nowrap truncate max-w-[160px]">Inicio</a>
             <!-- Categorias del menu: App.renderNavCategories() las toma de la base -->
             <span id="nav-categories-desktop" class="contents"></span>
-            <a href="javascript:void(0)" onclick="App.navigate('about')" class="hover:text-[#4D0E12] transition-colors flex-shrink-0 whitespace-nowrap">Sobre Nosotros</a>
-            <a href="javascript:void(0)" onclick="App.navigate('contact')" class="hover:text-[#4D0E12] transition-colors flex-shrink-0">Contacto</a>
+            <a href="javascript:void(0)" onclick="App.navigate('about')" data-cms="nav_about_label" class="hover:text-[#4D0E12] transition-colors flex-shrink-0 whitespace-nowrap truncate max-w-[200px]">Sobre Nosotros</a>
+            <a href="javascript:void(0)" onclick="App.navigate('contact')" data-cms="nav_contact_label" class="hover:text-[#4D0E12] transition-colors flex-shrink-0 whitespace-nowrap truncate max-w-[160px]">Contacto</a>
 
           </nav>
 
@@ -145,10 +145,10 @@
 
       <!-- Mobile Dropdown Navigation -->
       <div id="mobile-menu" class="hidden md:hidden border-t border-gray-200 bg-white px-4 pt-2 pb-4 space-y-2 text-sm font-medium text-coffee">
-        <a href="javascript:void(0)" onclick="App.navigate('home')" class="block py-2 hover:text-[#4D0E12]">Inicio</a>
+        <a href="javascript:void(0)" onclick="App.navigate('home')" data-cms="nav_home_label" class="block py-2 hover:text-[#4D0E12]">Inicio</a>
         <div id="nav-categories-mobile"></div>
-        <a href="javascript:void(0)" onclick="App.navigate('about')" class="block py-2 hover:text-[#4D0E12]">Sobre Nosotros</a>
-        <a href="javascript:void(0)" onclick="App.navigate('contact')" class="block py-2 hover:text-[#4D0E12]">Contacto</a>
+        <a href="javascript:void(0)" onclick="App.navigate('about')" data-cms="nav_about_label" class="block py-2 hover:text-[#4D0E12]">Sobre Nosotros</a>
+        <a href="javascript:void(0)" onclick="App.navigate('contact')" data-cms="nav_contact_label" class="block py-2 hover:text-[#4D0E12]">Contacto</a>
         <a href="javascript:void(0)" onclick="App.navigate('admin')" class="block py-2 text-[#4D0E12] font-bold bg-[#A5BCD6]/20 px-3 rounded-lg">👑 Panel de Administración</a>
       </div>
     </header>
@@ -937,15 +937,38 @@
 
             <form onsubmit="Admin.handleSaveContent(event)" class="space-y-6 text-xs">
 
+              <!-- Menu superior -->
+              <div class="bg-[#FAF8F5] p-5 rounded-2xl border border-[#e4dccb] space-y-3">
+                <h4 class="font-bold text-sm text-[#4D0E12]">1. Nombres del Men&uacute;</h4>
+                <p class="text-[11px] text-gray-400">
+                  As&iacute; se llaman los enlaces del men&uacute; superior. Las categor&iacute;as se cambian en
+                  <strong>Categor&iacute;as &amp; Portada</strong>.
+                </p>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label class="block font-semibold text-coffee mb-1">Inicio</label>
+                    <input type="text" id="cms-nav_home_label" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]" />
+                  </div>
+                  <div>
+                    <label class="block font-semibold text-coffee mb-1">Sobre Nosotros</label>
+                    <input type="text" id="cms-nav_about_label" placeholder="ej. Sobre Alice Brand" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]" />
+                  </div>
+                  <div>
+                    <label class="block font-semibold text-coffee mb-1">Contacto</label>
+                    <input type="text" id="cms-nav_contact_label" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]" />
+                  </div>
+                </div>
+              </div>
+
               <!-- Announcement bar -->
               <div class="bg-[#FAF8F5] p-5 rounded-2xl border border-[#e4dccb] space-y-3">
-                <h4 class="font-bold text-sm text-[#4D0E12]">1. Barra de Anuncios (parte superior)</h4>
+                <h4 class="font-bold text-sm text-[#4D0E12]">2. Barra de Anuncios (parte superior)</h4>
                 <textarea id="cms-announcement_bar_text" rows="2" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]"></textarea>
               </div>
 
               <!-- Hero -->
               <div class="bg-[#FAF8F5] p-5 rounded-2xl border border-[#e4dccb] space-y-3">
-                <h4 class="font-bold text-sm text-[#4D0E12]">2. Portada Principal (Hero)</h4>
+                <h4 class="font-bold text-sm text-[#4D0E12]">3. Portada Principal (Hero)</h4>
                 <div>
                   <label class="block font-semibold text-coffee mb-1">Etiqueta superior</label>
                   <input type="text" id="cms-hero_tag" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]" />
@@ -976,7 +999,7 @@
 
               <!-- About us -->
               <div class="bg-[#FAF8F5] p-5 rounded-2xl border border-[#e4dccb] space-y-3">
-                <h4 class="font-bold text-sm text-[#4D0E12]">3. Sección Sobre Nosotros</h4>
+                <h4 class="font-bold text-sm text-[#4D0E12]">4. Sección Sobre Nosotros</h4>
                 <div>
                   <label class="block font-semibold text-coffee mb-1">Título</label>
                   <input type="text" id="cms-about_title" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]" />
@@ -1005,7 +1028,7 @@
 
               <!-- WhatsApp banner -->
               <div class="bg-[#FAF8F5] p-5 rounded-2xl border border-[#e4dccb] space-y-3">
-                <h4 class="font-bold text-sm text-[#4D0E12]">4. Banner de Asesoría por WhatsApp</h4>
+                <h4 class="font-bold text-sm text-[#4D0E12]">5. Banner de Asesoría por WhatsApp</h4>
                 <div>
                   <label class="block font-semibold text-coffee mb-1">Título</label>
                   <textarea id="cms-whatsapp_assistance_title" rows="2" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]"></textarea>
@@ -1018,7 +1041,7 @@
 
               <!-- Footer -->
               <div class="bg-[#FAF8F5] p-5 rounded-2xl border border-[#e4dccb] space-y-3">
-                <h4 class="font-bold text-sm text-[#4D0E12]">5. Pie de Página</h4>
+                <h4 class="font-bold text-sm text-[#4D0E12]">6. Pie de Página</h4>
                 <div>
                   <label class="block font-semibold text-coffee mb-1">Descripción de la marca</label>
                   <textarea id="cms-footer_about" rows="3" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]"></textarea>
@@ -1806,7 +1829,7 @@
               <li><a href="javascript:void(0)" onclick="App.navigate('catalog', 'vestidos-de-bano')" class="hover:text-[#F5EFC6] transition-colors">Vestidos de Baño</a></li>
               <li><a href="javascript:void(0)" onclick="App.navigate('catalog', 'accesorios')" class="hover:text-[#F5EFC6] transition-colors">Accesorios de Playa</a></li>
               <li><a href="javascript:void(0)" onclick="App.navigate('catalog', 'colecciones')" class="hover:text-[#F5EFC6] transition-colors">Colección Caribe</a></li>
-              <li><a href="javascript:void(0)" onclick="App.navigate('about')" class="hover:text-[#F5EFC6] transition-colors">Sobre Nosotros</a></li>
+              <li><a href="javascript:void(0)" onclick="App.navigate('about')" data-cms="nav_about_label" class="hover:text-[#F5EFC6] transition-colors">Sobre Nosotros</a></li>
             </ul>
           </div>
 
@@ -1817,7 +1840,6 @@
               <li data-cms-item="footer_help_2"><span data-cms="footer_help_2">🔒 Pagos 100% seguros con PSE &amp; Wompi</span></li>
               <li data-cms-item="footer_help_3"><span data-cms="footer_help_3">🧵 Garantía de confección y protección solar UPF 50+</span></li>
               <li data-cms-item="footer_help_4" class="hidden"><span data-cms="footer_help_4"></span></li>
-              <li><a id="footer-admin-link" href="javascript:void(0)" onclick="App.navigate('admin')" class="hidden text-[#A5BCD6] font-bold underline hover:text-white">👑 Acceso al Panel de Administración</a></li>
             </ul>
           </div>
 

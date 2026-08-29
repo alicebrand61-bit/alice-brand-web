@@ -484,6 +484,7 @@ const Admin = {
   // ------------------------------------------------------------------
 
   CMS_FIELDS: [
+    'nav_home_label', 'nav_about_label', 'nav_contact_label',
     'announcement_bar_text',
     'hero_tag', 'hero_title', 'hero_subtitle', 'hero_cta_text',
     'hero_bg_image_url', 'hero_side_image_url',
