@@ -54,7 +54,9 @@ const App = {
       // El alto se fija desde el panel; el ancho se ajusta solo.
       if (alto > 0) {
         img.style.height = `${alto}px`;
-        img.style.width = 'auto';
+        // 'auto' colapsaba el SVG a 0 de ancho dentro del encabezado flexible.
+        img.style.width = '';
+        img.style.flexShrink = '0';
       }
     });
 
@@ -535,7 +537,8 @@ const App = {
     if (desktop) {
       desktop.innerHTML = this.categories.map(c => `
         <a href="javascript:void(0)" onclick="App.navigate('catalog', '${c.slug}')"
-           class="hover:text-[#4D0E12] transition-colors">${this.sanitizeCmsHtml(c.name)}</a>`).join('');
+           title="${(c.name || '').replace(/"/g, '&quot;')}"
+           class="hover:text-[#4D0E12] transition-colors whitespace-nowrap">${this.sanitizeCmsHtml(c.name)}</a>`).join('');
     }
 
     if (mobile) {

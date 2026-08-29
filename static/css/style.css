@@ -249,3 +249,8 @@ h1, h2, h3, h4, .font-serif {
 .lookbook-item:hover img {
   transform: scale(1.06);
 }
+
+
+/* Menu superior: permite desplazar si hay muchas categorias, sin barra visible */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
