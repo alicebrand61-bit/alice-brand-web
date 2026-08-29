@@ -98,7 +98,7 @@ const Admin = {
 
   switchTab(tab) {
     this.currentTab = tab;
-    const tabs = ['stats', 'products', 'orders', 'brand', 'typography', 'content', 'sections', 'gateway'];
+    const tabs = ['stats', 'products', 'orders', 'brand', 'categories', 'typography', 'content', 'sections', 'gateway'];
 
     tabs.forEach(t => {
       const section = document.getElementById(`admin-tab-${t}`);
@@ -117,6 +117,7 @@ const Admin = {
     if (tab === 'brand') this.loadSettings();
     if (tab === 'typography') this.loadTypographyTab();
     if (tab === 'content') this.loadContentTab();
+    if (tab === 'categories') this.loadCategoriesTab();
     if (tab === 'sections') this.loadSectionsTab();
     else if (this.editingSectionId !== null) this.cancelSectionEdit();
 
@@ -379,6 +380,7 @@ const Admin = {
   CMS_FIELDS: [
     'announcement_bar_text',
     'hero_tag', 'hero_title', 'hero_subtitle', 'hero_cta_text',
+    'hero_bg_image_url', 'hero_side_image_url',
     'about_title', 'about_subtitle', 'about_story_heading',
     'about_story_p1', 'about_story_p2', 'about_image_url',
     'whatsapp_assistance_title', 'whatsapp_assistance_desc',
@@ -969,6 +971,179 @@ const Admin = {
       await this.loadProducts();
       this.renderProductsTable();
       await App.fetchProducts();
+      App.showToast(data.message, 'success');
+    } catch (e) {
+      App.showToast(e.message, 'error');
+    }
+  },
+
+  // ------------------------------------------------------------------
+  // CATEGORIAS DE LA PORTADA (las tres tarjetas grandes del inicio)
+  // ------------------------------------------------------------------
+
+  categories: [],
+
+  async loadCategoriesTab() {
+    try {
+      const res = await fetch('/api/admin/categories', { headers: Auth.getAuthHeaders() });
+      if (!res.ok) throw new Error('No se pudieron cargar las categorias.');
+      this.categories = await res.json();
+      this.renderCategoriesList();
+    } catch (e) {
+      App.showToast(e.message, 'error');
+    }
+  },
+
+  renderCategoriesList() {
+    const cont = document.getElementById('admin-categories-list');
+    if (!cont) return;
+
+    cont.innerHTML = this.categories.map(c => {
+      const img = (c.image_url || '').trim();
+      return `
+        <div class="p-4 rounded-2xl border border-[#e4dccb] bg-[#FAF8F5] space-y-3">
+          <div class="flex items-start gap-4">
+            <div class="relative flex-shrink-0">
+              <img id="cat-preview-${c.id}" src="${img || Admin.PLACEHOLDER_IMG}"
+                   onerror="this.src='${Admin.PLACEHOLDER_IMG}'"
+                   class="w-24 h-28 object-cover rounded-xl border border-gray-200 shadow-sm bg-white" alt="" />
+              ${img ? `<button type="button" onclick="Admin.removeCategoryImage(${c.id})" title="Quitar esta imagen"
+                        class="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-red-600 text-white text-xs font-bold flex items-center justify-center shadow hover:bg-red-700">&times;</button>` : ''}
+            </div>
+
+            <div class="flex-1 min-w-0 space-y-2 text-xs">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <label class="block font-semibold text-coffee mb-1">Nombre de la categoria</label>
+                  <input type="text" id="cat-name-${c.id}" value="${(c.name || '').replace(/"/g, '&quot;')}"
+                    class="w-full p-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#4D0E12]" />
+                </div>
+                <div>
+                  <label class="block font-semibold text-coffee mb-1">Antetitulo (texto pequeno de arriba)</label>
+                  <input type="text" id="cat-tagline-${c.id}" value="${(c.tagline || '').replace(/"/g, '&quot;')}"
+                    placeholder="ej. Boutique" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#4D0E12]" />
+                </div>
+              </div>
+
+              <div>
+                <label class="block font-semibold text-coffee mb-1">Descripcion</label>
+                <textarea id="cat-desc-${c.id}" rows="2"
+                  class="w-full p-2 border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#4D0E12]">${(c.description || '').replace(/</g, '&lt;')}</textarea>
+              </div>
+
+              <div>
+                <label class="block font-semibold text-coffee mb-1">URL de la imagen (vacio = sin foto)</label>
+                <input type="text" id="cat-image-${c.id}" value="${(img).replace(/"/g, '&quot;')}"
+                  oninput="Admin.previewCategoryImage(${c.id})" placeholder="https://... o /uploads/..."
+                  class="w-full p-2 border border-gray-300 rounded-lg font-mono text-[11px] focus:ring-1 focus:ring-[#4D0E12]" />
+              </div>
+
+              <div class="flex items-center justify-between gap-2 flex-wrap pt-1">
+                <label class="btn-sand px-3 py-1.5 rounded-lg text-[11px] font-bold cursor-pointer inline-flex items-center gap-1.5">
+                  <i data-lucide="upload" class="w-3.5 h-3.5"></i> Subir Foto
+                  <input type="file" accept="image/*" class="hidden" onchange="Admin.handleCategoryImageUpload(${c.id}, this)" />
+                </label>
+                <button type="button" onclick="Admin.saveCategory(${c.id})"
+                  class="btn-primary px-5 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider shadow">
+                  Guardar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+
+    if (window.lucide) lucide.createIcons();
+  },
+
+  previewCategoryImage(categoryId) {
+    const url = document.getElementById(`cat-image-${categoryId}`)?.value.trim();
+    const preview = document.getElementById(`cat-preview-${categoryId}`);
+    if (preview) preview.src = url || Admin.PLACEHOLDER_IMG;
+  },
+
+  removeCategoryImage(categoryId) {
+    const input = document.getElementById(`cat-image-${categoryId}`);
+    if (input) input.value = '';
+    this.previewCategoryImage(categoryId);
+    this.saveCategory(categoryId);
+  },
+
+  async handleCategoryImageUpload(categoryId, input) {
+    if (!input.files || input.files.length === 0) return;
+    const formData = new FormData();
+    formData.append('file', input.files[0]);
+
+    try {
+      App.showToast('Subiendo la imagen de la categoria...', 'info');
+      const res = await fetch('/api/admin/upload', {
+        method: 'POST',
+        headers: Auth.getAuthHeaders(),
+        body: formData
+      });
+      if (!res.ok) throw new Error('No se pudo subir la imagen.');
+      const data = await res.json();
+
+      const field = document.getElementById(`cat-image-${categoryId}`);
+      if (field) field.value = data.url;
+      this.previewCategoryImage(categoryId);
+      await this.saveCategory(categoryId);
+    } catch (e) {
+      App.showToast(e.message, 'error');
+    }
+  },
+
+  async saveCategory(categoryId) {
+    const payload = {
+      name: document.getElementById(`cat-name-${categoryId}`)?.value.trim(),
+      tagline: document.getElementById(`cat-tagline-${categoryId}`)?.value.trim(),
+      description: document.getElementById(`cat-desc-${categoryId}`)?.value.trim(),
+      image_url: document.getElementById(`cat-image-${categoryId}`)?.value.trim()
+    };
+
+    if (!payload.name) {
+      App.showToast('La categoria debe tener un nombre.', 'error');
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/admin/categories/${categoryId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...Auth.getAuthHeaders() },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'No se pudo guardar la categoria.');
+
+      const idx = this.categories.findIndex(c => c.id === categoryId);
+      if (idx !== -1) this.categories[idx] = data;
+      this.renderCategoriesList();
+
+      await App.fetchCategories();
+      App.showToast(`Categoria "${data.name}" actualizada.`, 'success');
+    } catch (e) {
+      App.showToast(e.message, 'error');
+    }
+  },
+
+  async clearCategoryImages() {
+    if (!confirm(
+      'Quitar la foto de todas las categorias?\n\n' +
+      'Los nombres y descripciones se conservan: solo se borran las imagenes ' +
+      'para que puedas subir las tuyas.'
+    )) return;
+
+    try {
+      App.showToast('Vaciando las imagenes de las categorias...', 'info');
+      const res = await fetch('/api/admin/categories/clear-images', {
+        method: 'POST',
+        headers: Auth.getAuthHeaders()
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'No se pudieron quitar las imagenes.');
+
+      await this.loadCategoriesTab();
+      await App.fetchCategories();
       App.showToast(data.message, 'success');
     } catch (e) {
       App.showToast(e.message, 'error');

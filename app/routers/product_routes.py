@@ -81,7 +81,9 @@ def get_public_sections():
 
 @router.get("/categories", response_model=List[CategoryOut])
 def get_categories():
-    categories = query_db("SELECT id, name, slug, description, image_url FROM categories ORDER BY id ASC")
+    categories = query_db(
+        "SELECT id, name, slug, description, image_url, tagline FROM categories ORDER BY id ASC"
+    )
     return categories
 
 @router.get("/products", response_model=List[ProductOut])

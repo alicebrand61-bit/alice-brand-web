@@ -41,6 +41,13 @@ def init_db():
     );
     """)
 
+    # La tarjeta de categoria de la portada muestra un antetitulo ("Boutique",
+    # "Edicion Limitada"...). Se agrega si la base viene de una version previa.
+    cursor.execute("PRAGMA table_info(categories);")
+    cols_categorias = [c[1] for c in cursor.fetchall()]
+    if "tagline" not in cols_categorias:
+        cursor.execute("ALTER TABLE categories ADD COLUMN tagline TEXT DEFAULT '';")
+
     # Products table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS products (
@@ -192,6 +199,9 @@ def init_db():
         ("about_story_p1", "En Alice Brand fusionamos la tradición textil colombiana con siluetas de alta moda. Cada prenda es elaborada con amor en talleres locales por mujeres cabeza de hogar."),
         ("about_story_p2", "Nuestros tejidos incorporan tecnologías de secado ultra rápido y protección solar UPF 50+, combinados con nuestra icónica paleta Vinotinto (#4D0E12) y Azul Cielo (#A5BCD6)."),
         ("about_image_url", "https://images.unsplash.com/photo-1582639510494-c80b5de9f148?auto=format&fit=crop&w=1000&q=85"),
+        # Imagenes de la portada, editables desde el panel
+        ("hero_bg_image_url", "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=2000&q=85"),
+        ("hero_side_image_url", "https://images.unsplash.com/photo-1576426863848-c21f53c60b19?auto=format&fit=crop&w=1000&q=85"),
         ("whatsapp_assistance_title", "¿Dudas con tu talla? Te asesoramos en tiempo real por WhatsApp"),
         ("whatsapp_assistance_desc", "Nuestras asesoras de moda te guían para encontrar la prenda perfecta para tu cuerpo antes de comprar."),
         ("footer_about", "Boutique colombiana de trajes de baño, pareos y complementos de lujo costero. Diseños atemporales confeccionados con pasión y materiales de alta durabilidad.")

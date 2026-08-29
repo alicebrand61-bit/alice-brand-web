@@ -49,6 +49,13 @@ class CategoryOut(BaseModel):
     slug: str
     description: Optional[str] = None
     image_url: Optional[str] = None
+    tagline: Optional[str] = None
+
+class CategoryUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    image_url: Optional[str] = None
+    tagline: Optional[str] = None
 
 # --- Product Models ---
 class ColorOption(BaseModel):

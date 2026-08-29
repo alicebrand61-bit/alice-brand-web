@@ -165,7 +165,7 @@
       <!-- Hero Lookbook Banner -->
       <section data-section="hero" class="relative min-h-[580px] lg:min-h-[640px] flex items-center bg-[#FAF8F5] overflow-hidden">
         <div class="absolute inset-0 z-0">
-          <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=2000&q=85" alt="Playa Colombia" class="w-full h-full object-cover object-center opacity-30" />
+          <img data-cms-image="hero_bg_image_url" src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=2000&q=85" alt="Playa Colombia" class="w-full h-full object-cover object-center opacity-30" />
           <div class="absolute inset-0 bg-gradient-to-r from-[#FAF8F5] via-[#FAF8F5]/90 to-transparent"></div>
         </div>
 
@@ -214,7 +214,7 @@
           <!-- Hero Highlight Card -->
           <div class="lg:col-span-5 relative">
             <div class="relative mx-auto max-w-sm rounded-3xl overflow-hidden shadow-2xl border-4 border-white bg-white">
-              <img src="https://images.unsplash.com/photo-1576426863848-c21f53c60b19?auto=format&fit=crop&w=1000&q=85" alt="Bikini Alice Brand" class="w-full h-[460px] object-cover" />
+              <img data-cms-image="hero_side_image_url" src="https://images.unsplash.com/photo-1576426863848-c21f53c60b19?auto=format&fit=crop&w=1000&q=85" alt="Bikini Alice Brand" class="w-full h-[460px] object-cover" />
               <div class="absolute bottom-4 inset-x-4 p-4 rounded-2xl bg-white/95 backdrop-blur-md shadow-lg border border-white/40 flex justify-between items-center">
                 <div>
                   <span class="text-[10px] font-bold text-[#4D0E12] uppercase tracking-wider">Favorito de Temporada</span>
@@ -237,46 +237,9 @@
           <h2 class="text-3xl sm:text-4xl font-serif font-bold text-dark mt-1">Explora Nuestras Líneas Exclusivas</h2>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div onclick="App.navigate('catalog', 'vestidos-de-bano')" class="lookbook-item group cursor-pointer h-96 shadow-md border border-[#e4dccb]">
-            <img src="https://images.unsplash.com/photo-1582639510494-c80b5de9f148?auto=format&fit=crop&w=800&q=80" alt="Vestidos de Baño" class="w-full h-full object-cover" />
-            <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent"></div>
-            <div class="absolute bottom-6 inset-x-6 text-white">
-              <span class="text-[11px] uppercase tracking-widest text-[#F5EFC6] font-semibold">Boutique</span>
-              <h3 class="text-2xl font-serif font-bold mt-1">Vestidos de Baño</h3>
-              <p class="text-xs text-white/80 mt-1 line-clamp-2">Bikinis, enterizos y trikinis con ajuste perfecto.</p>
-              <span class="inline-flex items-center gap-1 text-xs font-bold text-[#A5BCD6] mt-3 group-hover:underline">
-                Ver Colección <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
-              </span>
-            </div>
-          </div>
-
-          <div onclick="App.navigate('catalog', 'accesorios')" class="lookbook-item group cursor-pointer h-96 shadow-md border border-[#e4dccb]">
-            <img src="https://images.unsplash.com/photo-1590736969955-71cc94801759?auto=format&fit=crop&w=800&q=80" alt="Accesorios" class="w-full h-full object-cover" />
-            <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent"></div>
-            <div class="absolute bottom-6 inset-x-6 text-white">
-              <span class="text-[11px] uppercase tracking-widest text-[#F5EFC6] font-semibold">Artesanía Costera</span>
-              <h3 class="text-2xl font-serif font-bold mt-1">Accesorios de Playa</h3>
-              <p class="text-xs text-white/80 mt-1 line-clamp-2">Sombreros de palma, kimonos en chifón y bolsos macramé.</p>
-              <span class="inline-flex items-center gap-1 text-xs font-bold text-[#A5BCD6] mt-3 group-hover:underline">
-                Ver Colección <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
-              </span>
-            </div>
-          </div>
-
-          <div onclick="App.navigate('catalog', 'colecciones')" class="lookbook-item group cursor-pointer h-96 shadow-md border border-[#e4dccb]">
-            <img src="https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?auto=format&fit=crop&w=800&q=80" alt="Colecciones" class="w-full h-full object-cover" />
-            <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent"></div>
-            <div class="absolute bottom-6 inset-x-6 text-white">
-              <span class="text-[11px] uppercase tracking-widest text-[#F5EFC6] font-semibold">Edición Limitada</span>
-              <h3 class="text-2xl font-serif font-bold mt-1">Colección Caribe</h3>
-              <p class="text-xs text-white/80 mt-1 line-clamp-2">Inspirada en los tonos vinotinto y azul cielo del mar caribe.</p>
-              <span class="inline-flex items-center gap-1 text-xs font-bold text-[#A5BCD6] mt-3 group-hover:underline">
-                Ver Colección <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
-              </span>
-            </div>
-          </div>
-        </div>
+        <!-- Tarjetas de categoria: App.renderCategoryCards() las dibuja desde la
+             base de datos, para poder editarlas desde el panel de administracion. -->
+        <div id="category-showcase-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
       </section>
 
       <!-- Featured Products Grid -->
@@ -359,7 +322,7 @@
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
-        <img id="about-image" src="https://images.unsplash.com/photo-1582639510494-c80b5de9f148?auto=format&fit=crop&w=1000&q=85" alt="Taller Alice Brand" class="rounded-3xl shadow-xl border-4 border-white" />
+        <img id="about-image" data-cms-image="about_image_url" src="https://images.unsplash.com/photo-1582639510494-c80b5de9f148?auto=format&fit=crop&w=1000&q=85" alt="Taller Alice Brand" class="rounded-3xl shadow-xl border-4 border-white" />
         <div class="space-y-6 text-sm text-coffee/90 leading-relaxed font-light">
           <h3 data-cms="about_story_heading" class="text-2xl font-serif font-bold text-dark">Confección Consciente &amp; Amor por los Detalles</h3>
           <p data-cms="about_story_p1">
@@ -516,6 +479,11 @@
               <button id="admin-nav-content" onclick="Admin.switchTab('content')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-300 hover:bg-white/10 hover:text-white">
                 <i data-lucide="file-text" class="w-4 h-4"></i>
                 <span>Textos de la Página</span>
+              </button>
+
+              <button id="admin-nav-categories" onclick="Admin.switchTab('categories')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-300 hover:bg-white/10 hover:text-white">
+                <i data-lucide="layout-grid" class="w-4 h-4"></i>
+                <span>Categor&iacute;as &amp; Portada</span>
               </button>
 
               <button id="admin-nav-sections" onclick="Admin.switchTab('sections')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-gray-300 hover:bg-white/10 hover:text-white">
@@ -769,6 +737,30 @@
           </div>
 
 
+          <!-- TAB: CATEGORIAS (tarjetas de la portada) -->
+          <div id="admin-tab-categories" class="hidden bg-white p-8 rounded-3xl border border-[#e4dccb] shadow-sm space-y-6">
+            <div class="flex items-center justify-between gap-3 border-b border-gray-100 pb-4 flex-wrap">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-[#4D0E12] text-white flex items-center justify-center">
+                  <i data-lucide="layout-grid" class="w-6 h-6"></i>
+                </div>
+                <div>
+                  <h3 class="font-serif font-bold text-2xl text-dark">Categor&iacute;as de la Portada</h3>
+                  <p class="text-xs text-gray-500">Son las tres tarjetas grandes del inicio. Cambia su foto, su t&iacute;tulo y su descripci&oacute;n.</p>
+                </div>
+              </div>
+
+              <button onclick="Admin.clearCategoryImages()" title="Quitar la foto de todas las categor&iacute;as"
+                class="px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider border border-red-200 text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2">
+                <i data-lucide="image-off" class="w-4 h-4"></i>
+                <span>Vaciar Im&aacute;genes</span>
+              </button>
+            </div>
+
+            <div id="admin-categories-list" class="space-y-4"></div>
+          </div>
+
+
           <!-- TAB 5: TYPOGRAPHY (Fuentes de Google + fuentes de Microsoft Word) -->
           <div id="admin-tab-typography" class="hidden bg-white p-8 rounded-3xl border border-[#e4dccb] shadow-sm space-y-6">
             <div class="flex items-center gap-3 border-b border-gray-100 pb-4">
@@ -857,6 +849,16 @@
                 <div>
                   <label class="block font-semibold text-coffee mb-1">Texto del botón principal</label>
                   <input type="text" id="cms-hero_cta_text" class="w-full p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]" />
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block font-semibold text-coffee mb-1">Imagen de fondo (vacío = sin foto)</label>
+                    <input type="text" id="cms-hero_bg_image_url" class="w-full p-2.5 border border-gray-300 rounded-xl font-mono text-[11px] focus:ring-1 focus:ring-[#4D0E12]" />
+                  </div>
+                  <div>
+                    <label class="block font-semibold text-coffee mb-1">Imagen lateral (vacío = sin foto)</label>
+                    <input type="text" id="cms-hero_side_image_url" class="w-full p-2.5 border border-gray-300 rounded-xl font-mono text-[11px] focus:ring-1 focus:ring-[#4D0E12]" />
+                  </div>
                 </div>
               </div>
 

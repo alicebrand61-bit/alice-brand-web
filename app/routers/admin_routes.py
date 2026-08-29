@@ -8,7 +8,8 @@ from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, s
 
 from app.models import (
     ProductCreate, ProductUpdate, ProductOut, OrderOut, OrderStatusUpdate,
-    SectionCreate, SectionUpdate, SectionOut, SectionReorder
+    SectionCreate, SectionUpdate, SectionOut, SectionReorder,
+    CategoryOut, CategoryUpdate
 )
 from app.database import query_db, execute_db
 from app.auth import get_current_admin
@@ -250,6 +251,64 @@ def clear_catalog_images(admin: dict = Depends(get_current_admin)):
         "success": True,
         "cleared": total,
         "message": f"Se quitaron las imagenes de {total} productos. Ya puedes subir las tuyas."
+    }
+
+
+# ----------------------------------------------------------------------
+# CATEGORIAS (las tarjetas de la portada: imagen, titulo y descripcion)
+# ----------------------------------------------------------------------
+
+@router.get("/categories", response_model=List[CategoryOut])
+def get_admin_categories(admin: dict = Depends(get_current_admin)):
+    return query_db(
+        "SELECT id, name, slug, description, image_url, tagline FROM categories ORDER BY id ASC"
+    )
+
+
+@router.put("/categories/{category_id}", response_model=CategoryOut)
+def update_category(
+    category_id: int,
+    category_in: CategoryUpdate,
+    admin: dict = Depends(get_current_admin)
+):
+    """Actualiza una categoria. Un image_url vacio deja la tarjeta sin foto."""
+    existing = query_db("SELECT * FROM categories WHERE id = ?", (category_id,), one=True)
+    if not existing:
+        raise HTTPException(status_code=404, detail="Categoria no encontrada.")
+
+    updates, params = [], []
+    for field in ("name", "description", "image_url", "tagline"):
+        value = getattr(category_in, field, None)
+        if value is None:
+            continue
+        if field == "name" and not value.strip():
+            raise HTTPException(status_code=400, detail="La categoria debe tener un nombre.")
+        updates.append(f"{field} = ?")
+        params.append(value.strip())
+
+    if updates:
+        params.append(category_id)
+        execute_db(f"UPDATE categories SET {', '.join(updates)} WHERE id = ?", params)
+
+    return query_db(
+        "SELECT id, name, slug, description, image_url, tagline FROM categories WHERE id = ?",
+        (category_id,),
+        one=True
+    )
+
+
+@router.post("/categories/clear-images")
+def clear_category_images(admin: dict = Depends(get_current_admin)):
+    """Deja sin foto las tarjetas de categoria de la portada."""
+    total_row = query_db("SELECT COUNT(*) as c FROM categories", one=True)
+    total = total_row["c"] if total_row else 0
+
+    execute_db("UPDATE categories SET image_url = ''")
+
+    return {
+        "success": True,
+        "cleared": total,
+        "message": f"Se quitaron las imagenes de {total} categorias. Ya puedes subir las tuyas."
     }
 
 

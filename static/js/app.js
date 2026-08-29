@@ -135,10 +135,16 @@ const App = {
       }
     });
 
-    const aboutImg = document.getElementById('about-image');
-    if (aboutImg && this.settings.about_image_url) {
-      aboutImg.src = this.settings.about_image_url;
-    }
+    // Imagenes editables de la pagina. Si la clave quedo vacia se oculta la
+    // foto en vez de dejar la que venia de fabrica.
+    document.querySelectorAll('[data-cms-image]').forEach(img => {
+      const key = img.getAttribute('data-cms-image');
+      if (!(key in this.settings)) return;
+
+      const url = (this.settings[key] || '').trim();
+      img.classList.toggle('hidden', !url);
+      if (url) img.src = url;
+    });
   },
 
   // Permite formato basico (negrita, cursiva, saltos de linea) pero elimina
@@ -311,6 +317,7 @@ const App = {
       if (res.ok) {
         this.categories = await res.json();
         this.renderCategoryPills();
+        this.renderCategoryCards();
       }
     } catch (e) {
       console.error("Error fetching categories", e);
@@ -332,6 +339,39 @@ const App = {
     } catch (e) {
       console.error("Error fetching products", e);
     }
+  },
+
+  // Tarjetas de categoria de la portada. Antes estaban escritas a mano en el
+  // HTML con imagenes fijas; ahora salen de la base y se editan en el panel.
+  renderCategoryCards() {
+    const grid = document.getElementById('category-showcase-grid');
+    if (!grid) return;
+
+    if (!this.categories.length) {
+      grid.innerHTML = '';
+      return;
+    }
+
+    grid.innerHTML = this.categories.map(c => {
+      const img = (c.image_url || '').trim() || this.PLACEHOLDER_IMG;
+      const tagline = (c.tagline || '').trim();
+      return `
+        <div onclick="App.navigate('catalog', '${c.slug}')" class="lookbook-item group cursor-pointer h-96 shadow-md border border-[#e4dccb]">
+          <img src="${this.safeUrl(img)}" onerror="this.src='${this.PLACEHOLDER_IMG}'"
+               alt="${(c.name || '').replace(/"/g, '&quot;')}" class="w-full h-full object-cover" />
+          <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent"></div>
+          <div class="absolute bottom-6 inset-x-6 text-white">
+            ${tagline ? `<span class="text-[11px] uppercase tracking-widest text-[#F5EFC6] font-semibold">${this.sanitizeCmsHtml(tagline)}</span>` : ''}
+            <h3 class="text-2xl font-serif font-bold mt-1">${this.sanitizeCmsHtml(c.name)}</h3>
+            ${c.description ? `<p class="text-xs text-white/80 mt-1 line-clamp-2">${this.sanitizeCmsHtml(c.description)}</p>` : ''}
+            <span class="inline-flex items-center gap-1 text-xs font-bold text-[#A5BCD6] mt-3 group-hover:underline">
+              Ver Colección <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+            </span>
+          </div>
+        </div>`;
+    }).join('');
+
+    if (window.lucide) lucide.createIcons();
   },
 
   renderCategoryPills() {
