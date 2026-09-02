@@ -4,6 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Alice Brand | Vestidos de Baño, Lencería & Moda Costera Colombiana</title>
+
+  <!-- Descripcion y vista previa al compartir el enlace (WhatsApp, redes) -->
+  <meta name="description" content="Boutique colombiana de trajes de baño, pareos y accesorios de lujo costero. Envíos a toda Colombia · Pagos seguros con PSE." />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Alice Brand" />
+  <meta property="og:title" content="Alice Brand · Swimwear & Resort Wear Colombia" />
+  <meta property="og:description" content="Trajes de baño, pareos y accesorios de lujo costero, hechos en Colombia. Envíos nacionales y pagos seguros con PSE." />
+  <meta property="og:image" content="/static/images/logo-ab.svg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Alice Brand · Swimwear & Resort Wear Colombia" />
+  <meta name="twitter:description" content="Trajes de baño, pareos y accesorios de lujo costero, hechos en Colombia." />
   
   <!-- Tailwind CSS via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -1777,6 +1788,20 @@
           </div>
         </div>
 
+        <!-- Colores disponibles del producto -->
+        <div>
+          <label class="block font-semibold text-coffee mb-1">Colores disponibles</label>
+          <div id="prod-colors-list" class="flex flex-wrap items-center gap-2 mb-2"></div>
+          <div class="flex items-center gap-2">
+            <input type="color" id="prod-color-hex" value="#4D0E12" class="w-10 h-10 rounded-lg border border-gray-300 cursor-pointer p-0.5" />
+            <input type="text" id="prod-color-name" placeholder="Nombre del color (ej. Vinotinto)" class="flex-1 p-2.5 border border-gray-300 rounded-xl focus:ring-1 focus:ring-[#4D0E12]" />
+            <button type="button" onclick="Admin.addProductColor()" class="btn-sand px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5">
+              <i data-lucide="plus" class="w-4 h-4"></i> Agregar
+            </button>
+          </div>
+          <p class="text-[10px] text-gray-400 mt-1">Elige el color, ponle nombre y pulsa Agregar. Aparecen como puntos en la tienda.</p>
+        </div>
+
         <div class="flex gap-6 pt-1">
           <label class="flex items-center gap-2 cursor-pointer font-medium text-coffee">
             <input type="checkbox" id="prod-form-featured" class="rounded text-[#4D0E12] focus:ring-[#4D0E12]" />
@@ -1825,12 +1850,7 @@
 
           <div class="space-y-3">
             <h4 class="font-serif font-bold text-base text-white uppercase tracking-wider">Categorías</h4>
-            <ul class="space-y-2 text-xs text-white/70">
-              <li><a href="javascript:void(0)" onclick="App.navigate('catalog', 'vestidos-de-bano')" class="hover:text-[#F5EFC6] transition-colors">Vestidos de Baño</a></li>
-              <li><a href="javascript:void(0)" onclick="App.navigate('catalog', 'accesorios')" class="hover:text-[#F5EFC6] transition-colors">Accesorios de Playa</a></li>
-              <li><a href="javascript:void(0)" onclick="App.navigate('catalog', 'colecciones')" class="hover:text-[#F5EFC6] transition-colors">Colección Caribe</a></li>
-              <li><a href="javascript:void(0)" onclick="App.navigate('about')" data-cms="nav_about_label" class="hover:text-[#F5EFC6] transition-colors">Sobre Nosotros</a></li>
-            </ul>
+            <ul id="footer-categories" class="space-y-2 text-xs text-white/70"></ul>
           </div>
 
           <div class="space-y-3">

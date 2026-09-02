@@ -4,7 +4,16 @@ import json
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-DB_PATH = BASE_DIR / "alice_brand.db"
+
+# DATA_DIR permite que la base de datos y las imagenes subidas vivan en un
+# disco persistente (en Render se monta un disco y se define DATA_DIR=/data).
+# Si no se define, se usa la carpeta del proyecto, como en local.
+DATA_DIR = Path(os.getenv("DATA_DIR", str(BASE_DIR)))
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+DB_PATH = DATA_DIR / "alice_brand.db"
+UPLOAD_DIR = DATA_DIR / "uploads"
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 def get_db_connection():
     conn = sqlite3.connect(str(DB_PATH))

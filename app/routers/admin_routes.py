@@ -18,8 +18,7 @@ from app.routers.product_routes import format_product_row, format_section_row
 
 router = APIRouter(prefix="/api/admin", tags=["Panel de Administración"])
 
-UPLOAD_DIR = Path(__file__).resolve().parent.parent / "uploads"
-UPLOAD_DIR.mkdir(exist_ok=True)
+from app.database import UPLOAD_DIR
 
 @router.get("/stats")
 def get_admin_stats(admin: dict = Depends(get_current_admin)):

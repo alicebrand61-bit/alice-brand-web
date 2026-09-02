@@ -985,6 +985,39 @@ const Admin = {
     if (window.lucide) lucide.createIcons();
   },
 
+  // ------------------------------------------------------------------
+  // COLORES DEL PRODUCTO
+  // ------------------------------------------------------------------
+  currentProductColors: [],
+
+  renderProductColors() {
+    const cont = document.getElementById('prod-colors-list');
+    if (!cont) return;
+    if (!this.currentProductColors.length) {
+      cont.innerHTML = '<span class="text-[11px] text-gray-400">Sin colores. Agrega al menos uno abajo.</span>';
+      return;
+    }
+    cont.innerHTML = this.currentProductColors.map((c, i) => `
+      <span class="inline-flex items-center gap-1.5 bg-gray-100 rounded-full pl-1.5 pr-2 py-1 text-[11px]">
+        <span class="w-4 h-4 rounded-full border border-gray-300" style="background-color:${c.hex}"></span>
+        ${this.escapeHtml(c.name)}
+        <button type="button" onclick="Admin.removeProductColor(${i})" class="text-red-500 hover:text-red-700 font-bold" title="Quitar">&times;</button>
+      </span>`).join('');
+  },
+
+  addProductColor() {
+    const hex = document.getElementById('prod-color-hex').value;
+    const name = document.getElementById('prod-color-name').value.trim() || hex;
+    this.currentProductColors.push({ name, hex });
+    document.getElementById('prod-color-name').value = '';
+    this.renderProductColors();
+  },
+
+  removeProductColor(i) {
+    this.currentProductColors.splice(i, 1);
+    this.renderProductColors();
+  },
+
   // Rellena el desplegable de categorias del formulario con las que existen hoy.
   fillProductCategorySelect(seleccionada) {
     const select = document.getElementById('prod-form-category');
@@ -1006,6 +1039,8 @@ const Admin = {
     document.getElementById('prod-form-price').value = '';
     document.getElementById('prod-form-stock').value = '15';
     document.getElementById('prod-form-images').value = '';
+    this.currentProductColors = [];
+    this.renderProductColors();
     this.fillProductCategorySelect();
     document.getElementById('prod-form-featured').checked = false;
     document.getElementById('prod-form-new').checked = true;
@@ -1025,6 +1060,8 @@ const Admin = {
     document.getElementById('prod-form-desc').value = p.description;
     document.getElementById('prod-form-price').value = p.price_cop;
     this.fillProductCategorySelect(p.category_id);
+    this.currentProductColors = Array.isArray(p.colors) ? p.colors.map(c => ({name: c.name, hex: c.hex})) : [];
+    this.renderProductColors();
     document.getElementById('prod-form-stock').value = p.stock;
     document.getElementById('prod-form-images').value = p.images.join('\n');
     document.getElementById('prod-form-featured').checked = p.featured;
@@ -1724,11 +1761,7 @@ const Admin = {
       price_cop,
       category_id,
       sizes: ["S", "M", "L"],
-      colors: [
-        { name: "Vinotinto", hex: "#4D0E12" },
-        { name: "Azul Cielo", hex: "#A5BCD6" },
-        { name: "Arena Suave", hex: "#F5EFC6" }
-      ],
+      colors: this.currentProductColors,
       // Se respeta la lista tal cual: un producto puede quedarse sin imagenes.
       images,
       stock,

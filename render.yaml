@@ -7,3 +7,17 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
+      # La base de datos y las imagenes viven en el disco persistente.
+      - key: DATA_DIR
+        value: /data
+      # Credenciales del administrador: cambialas en el panel de Render.
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+    # Disco persistente: sin esto, cada reinicio borra los cambios.
+    # Requiere un plan de pago (Starter). Monta el disco en /data.
+    disk:
+      name: alice-brand-data
+      mountPath: /data
+      sizeGB: 1

@@ -8,9 +8,9 @@ from contextlib import asynccontextmanager
 from app.seed_data import seed_database
 from app.routers import auth_routes, product_routes, order_routes, payment_routes, admin_routes
 
+from app.database import UPLOAD_DIR
 BASE_DIR = Path(__file__).resolve().parent.parent
 STATIC_DIR = BASE_DIR / "static"
-UPLOAD_DIR = BASE_DIR / "app" / "uploads"
 
 # Ensure directories exist
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)

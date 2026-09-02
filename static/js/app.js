@@ -552,6 +552,16 @@ const App = {
     const desktop = document.getElementById('nav-categories-desktop');
     const mobile = document.getElementById('nav-categories-mobile');
 
+    // Columna "Categorias" del pie de pagina: las mismas categorias reales.
+    const footer = document.getElementById('footer-categories');
+    if (footer) {
+      footer.innerHTML = this.categories.map(c => `
+        <li><a href="javascript:void(0)" onclick="App.navigate('catalog', '${c.slug}')"
+          class="hover:text-[#F5EFC6] transition-colors">${this.sanitizeCmsHtml(c.name)}</a></li>`).join('')
+        + `<li><a href="javascript:void(0)" onclick="App.navigate('about')"
+             class="hover:text-[#F5EFC6] transition-colors">${this.sanitizeCmsHtml(this.settings.nav_about_label || 'Sobre Nosotros')}</a></li>`;
+    }
+
     // En el menu movil caben todas, una debajo de otra.
     if (mobile) {
       mobile.innerHTML = this.categories.map(c => `
